@@ -92,13 +92,13 @@ close(file_in)
 
 ########## Writing Oututs ############
 #if work_flow == "Start"
-file_out = open("Output", "w")
+file_out = open("Output_evo", "w")
 #else
     #file_out = open("Output", "a")
 #end
 
 write(file_out, "###############################################")
-write(file_out, "\rOutput file of Quantum Spin Chain simulation")
+write(file_out, "\rOutput file of Quantum Spin Chain simulation (time evolution)")
 write(file_out, "\r")
 
 write(file_out, "\r#### Parameters #####")
@@ -285,4 +285,3 @@ for t in 0.0:tau:ttotal
     push!(psi_evo,psi_temp)
   end
 
-  
