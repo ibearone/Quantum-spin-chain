@@ -13,17 +13,20 @@
 
 ########## Initialization ############
 using ITensors
-using ITensors.HDF5
-using LaTeXStrings
-using Plots
+using ITensorMPS
+using HDF5
+#using ITensors.HDF5
+#using LaTeXStrings
+#using Plots
 using JLD2
-using DelimitedFiles
+#using DelimitedFiles
 using Dates
 
 ########### Modules ##############
 include("read_input.jl")
 
 include("Hamiltonian.jl")
+include("time_evo_gate.jl")
 include("ladder_lattice.jl")
 include("Spin_Operator.jl")
 include("DW_chirality_operators.jl")
@@ -82,8 +85,8 @@ mindim = read_input(file_in,"mindim",Int,1)
 psi_lambda = read_input(file_in,"psi_lambda",Float64,0)
 if work_flow == "time_evo"
     tau = read_input(file_in,"tau_dis",Float64,0)
-    t_toal = read_input(file_in,"t_total",Float64,0)
-    band_evo = read_input(file_in,"band_evo",Int,1)
+    t_total = read_input(file_in,"t_total",Float64,0)
+    band_evo = read_input(file_in,"band_evo",Int,0)
    else
 end
 close(file_in)
@@ -167,7 +170,7 @@ write(file_out, "\rpsi_lambda: $psi_lambda")
 
 if work_flow == "time_evo"
     write(file_out, "\rtau_dis: $tau")
-    write(file_out, "\rt_toal: $t_toal")
+    write(file_out, "\rt_total: $t_total")
     write(file_out, "\rband_evo: $band_evo")
    else
 end
@@ -201,7 +204,7 @@ write(file_out, "\rReading Psi_* finished.")
 write(file_out, "\r")
 flush(file_out)
 
-f = h5open("Hamiltonian.h5","r")
+f = h5open("Ham.h5","r")
 H=read(f,"Hamiltonian",MPO)
 close(f)
 
@@ -210,9 +213,9 @@ write(file_out, "\rReading Hamiltonian finished.")
 write(file_out, "\r")
 flush(file_out)
 
-energy=load("data.jld2","energy")
-E=load("data.jld2","E")
-sweep_num=load("data.jld2","sweep_num")
+energy=load("DMRG_data.jld2","energy")
+E=load("DMRG_data.jld2","E")
+sweep_num=load("DMRG_data.jld2","sweep_num")
 
 write(file_out, "\rReading jld2 finished.")
 
@@ -227,61 +230,121 @@ push!(DATE,Dates.Time(Dates.now()))
 rightnow=DATE[end]
 write(file_out, "\rDate: $rightnow")
 
+write(file_out, "\r#### Define gates for time evolution ####")
+write(file_out, "\r")
+
+
+####### define time evolution operator #######
+if Mobile_DW == 1
+  global H_time,gates=Ham_mobile_gates(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
+
+else
+  NBC=[1,N]
+  global H_time,gates=Ham_mobile_gates(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
+end
+global DWxMPO,DWyMPO,DWzMPO=DWC_operator_1D(N::Int,sites)
 write(file_out, "\r#### Work flow Information ####")
 write(file_out, "\r")
 
-redirect_stdout(file_out)
+
+
 
 ####### define time evolution operator #######
-gates = ITensor[]
 
-Jx = -J
-Jy = -J + Ky
-Jz = -J - Kz
-hzsites = [0 for n=1:N]
-hzsites[1:NBC1].=hz
-hzsites[NBC2:N].=-hz
-
-  for j in 1:(N - 1)
-    s1 = sites[j]
-    s2 = sites[j + 1]
-    hj_inner =
-    hy*op("Sy", s1) +
-    hx*op("Sx", s1) +
-    hzsites[j]*op("Sz", s1) 
-    Gj = exp(-im * tau/2 * hj_inner)
-    push!(gates, Gj)
-    
-    hj_inter =
-      Jz*op("Sz", s1) * op("Sz", s2) +
-      Jy*op("Sy", s1) * op("Sy", s2) +
-      Jx*op("Sx", s1) * op("Sx", s2) 
-
-    Gj = exp(-im * tau/2 * hj_inter)
-    push!(gates, Gj)
-
-  end
-  for j = N
-    s1 = sites[j]
-    hj_inner =
-      hy*op("Sy", s1) +
-      hx*op("Sx", s1) +
-      hzsites[j]*op("Sz", s1) 
-    Gj = exp(-im * tau/2 * hj_inner)
-    push!(gates, Gj)
-  end
-  append!(gates, reverse(gates));
-
-####### define time evolution operator #######
+write(file_out, "\r#### Start calculation time evolution of state $band_evo ####")
+write(file_out, "\r")
 
 psi_evo=MPS[]
-psi_temp = apply(gates, psi[band_evo]; cutoff)
-push!(psi_evo,psi_temp)
-for t in 0.0:tau:ttotal
-    t≈ttotal && break
-    
-    psi_temp = apply(gates, psi_temp; cutoff)
-    normalize!(psi_temp)
-    push!(psi_evo,psi_temp)
-  end
 
+Ene_H0=[]
+Ene_H_time=[]
+
+Sz_i=[]
+Sy_i=[]
+Sx_i=[]
+
+Cx=[]
+Cy=[]
+Cz=[]
+
+global psi_temp = apply(gates, psi[band_evo]; cutoff)
+push!(psi_evo,psi_temp)
+for (i, t) in enumerate(0.0:tau:t_total)
+  psi_t = psi_evo[i]
+
+  ene_temp=real(inner(psi_t', H,psi_t))
+  ene_temp2=real(inner(psi_t', H_time,psi_t))
+
+  Sz = expect(psi_t, "Sz")
+  Sy = expect(psi_t, "Sy")
+  Sx = expect(psi_t, "Sx")
+  DWxtemp=inner(psi_t',DWxMPO,psi_t)
+  DWytemp=inner(psi_t',DWyMPO,psi_t)
+  DWztemp=inner(psi_t',DWzMPO,psi_t)
+
+  
+  push!(Ene_H0,ene_temp)
+  push!(Ene_H_time,ene_temp2)
+
+  push!(Sz_i,Sz)
+  push!(Sy_i,Sy)
+  push!(Sx_i,Sx)
+  
+  push!(Cx,DWxtemp)
+  push!(Cy,DWytemp)
+  push!(Cz,DWztemp)
+
+  t≈t_total && break
+    
+  global psi_temp = apply(gates, psi_temp; cutoff)
+  normalize!(psi_temp)
+  push!(psi_evo,psi_temp)
+
+    if i+1 % 10 == 0 && i != 0
+      write(file_out, "\rtime step: $t")
+      push!(DATE,Dates.Time(Dates.now()))
+      local rightnow=DATE[end]
+      write(file_out, "\rDate: $rightnow")
+      write(file_out, "\r")
+  end
+end
+
+
+
+
+# Open an HDF5 file for writing with a name based on band_evo
+file_psi = h5open(string("psi_evo_", band_evo, ".h5"), "w")
+
+# Iterate over each MPS in the psi_evo array
+for i in 1:length(psi_evo)
+  # Create a unique name for each MPS entry
+  evo_name = "psi_evo_$(i)"
+  
+  # Write the MPS to the HDF5 file under the unique name
+  write(file_psi, evo_name, psi_evo[i])
+end
+psi_evo_length=length(psi_evo)
+# Close the HDF5 file
+close(file_psi)
+
+
+write(file_out, "\r#### Psi_evo_$band_evo Saved ####")
+write(file_out, "\r")
+write(file_out, "\rPsi_evo_$band_evo length : $psi_evo_length")
+write(file_out, "\r")
+
+###### Saving Data #########
+   
+jldsave("time_evo_data.jld2"; Ene_H0,Ene_H_time,Sz_i,Sy_i,Sx_i,Cz,Cy,Cx)
+
+####### timer  ##################
+write(file_out, "\rSimulation Finished.")
+push!(DATE,Dates.Time(Dates.now()))
+rightnow=DATE[end]
+runtime=round(Dates.value(DATE[end]-DATE[1])/1E9/60;digits = 2)
+write(file_out, "\rDate: $rightnow")
+write(file_out, "\rtotal runtime: $runtime mins")
+write(file_out, "\r###############################################")
+close(file_out)
+
+redirect_stdout(file_out)
