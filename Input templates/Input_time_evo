@@ -1,0 +1,30 @@
+PARAMETER
+Lattice = 1
+Mobile_DW  = 0
+N = 30
+Bondary Condition = 11
+Initial Condition = DW
+J = 25.85
+Kz = 0.26
+Ky = 0.1
+hx = 0
+hy = 0.052
+hz = -100
+
+CONTROL
+work = time_evo
+nsweeps = 10
+cutoff = 1E-11
+converg = 1E-11
+noise = 0
+max_sweep = 1E4
+band_max = 6
+maxdim = 30,100,200,400,800
+mindim = 30
+psi_lambda  = 0.05
+
+TIME_EVO
+write_psi_evo = 1 
+tau_dis = 0.01
+t_total = 2
+band_evo = 1
