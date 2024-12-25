@@ -295,10 +295,10 @@ for (i, t) in enumerate(0.0:tau:t_total)
 end
 write(file_out, "\rtime step: $t_total")
 push!(DATE,Dates.Time(Dates.now()))
-local rightnow=DATE[end]
+rightnow=DATE[end]
 write(file_out, "\rDate: $rightnow")
 write(file_out, "\r")
-write(file_out, "\rFished time evolution of state $band_evo")
+write(file_out, "\rFinished time evolution of state $band_evo")
 flush(file_out)
 GC.gc()
 
