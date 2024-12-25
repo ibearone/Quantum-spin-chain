@@ -306,6 +306,7 @@ for (i, t) in enumerate(0.0:tau:t_total)
       local rightnow=DATE[end]
       write(file_out, "\rDate: $rightnow")
       write(file_out, "\r")
+      flush(file_out)
   end
 end
 
@@ -346,5 +347,3 @@ write(file_out, "\rDate: $rightnow")
 write(file_out, "\rtotal runtime: $runtime mins")
 write(file_out, "\r###############################################")
 close(file_out)
-
-redirect_stdout(file_out)
