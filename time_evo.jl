@@ -280,7 +280,7 @@ for (i, t) in enumerate(0.0:tau:t_total)
     push!(psi_evo,psi_temp)
   end
 
-    if (i-1) % 1000 == 0 && i != 0
+    if (i-1) % Int(t_total/tau/100) == 0 && i != 0
       write(file_out, "\rTime step: $t/$t_total")
       push!(DATE,Dates.Time(Dates.now()))
       local rightnow=DATE[end]
