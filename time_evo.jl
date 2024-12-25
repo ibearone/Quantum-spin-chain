@@ -24,7 +24,6 @@ using Dates
 
 ########### Modules ##############
 include("read_input.jl")
-
 include("Hamiltonian.jl")
 include("time_evo_gate.jl")
 include("ladder_lattice.jl")
@@ -95,11 +94,16 @@ close(file_in)
 ########## End of Reading Inputs ############
 
 ########## Writing Oututs ############
-#if work_flow == "Start"
-file_out = open("Output_evo", "w")
-#else
-    #file_out = open("Output", "a")
-#end
+if work_flow == "time_evo"
+ file_out = open("Output_evo", "w")
+ else
+  write(file_out, "\rWork flow is not assigned.")
+  push!(DATE,Dates.Time(Dates.now()))
+  rightnow=DATE[end]
+  write(file_out, "\rDate: $rightnow")
+  write(file_out, "\r")
+  exit()
+end
 
 write(file_out, "###############################################")
 write(file_out, "\rOutput file of Quantum Spin Chain simulation (time evolution)")
@@ -169,6 +173,7 @@ write(file_out, "\rmaxdim: $maxdim")
 write(file_out, "\rmindim: $mindim")
 write(file_out, "\rpsi_lambda: $psi_lambda")
 
+write(file_out, "\r")
 write(file_out, "\r#### Time evolution Parameters ####")
 write(file_out, "\r")
 
@@ -180,18 +185,10 @@ if work_flow == "time_evo"
    else
 end
 write(file_out, "\r")
-#flush(file_out)
 
-############ memory conuter #####
 
-############
-####### timer  ##################
-
-write(file_out, "\rReading Inputs finished.")
-
+write(file_out, "\r#### Reading DMRG data ####")
 write(file_out, "\r")
-flush(file_out)
-
 
 ###### Reading Data #########
 psi=[]
@@ -205,27 +202,23 @@ end
 sites = siteinds(psi[1])
 
 write(file_out, "\rReading Psi_* finished.")
-
 write(file_out, "\r")
-flush(file_out)
+
 
 f = h5open("Ham.h5","r")
 H=read(f,"Hamiltonian",MPO)
 close(f)
 
 write(file_out, "\rReading Hamiltonian finished.")
-
 write(file_out, "\r")
-flush(file_out)
 
 energy=load("DMRG_data.jld2","energy")
 E=load("DMRG_data.jld2","E")
 sweep_num=load("DMRG_data.jld2","sweep_num")
 
 write(file_out, "\rReading jld2 finished.")
-
 write(file_out, "\r")
-flush(file_out)
+
 
 ###### Reading Data #########
 
@@ -237,7 +230,7 @@ write(file_out, "\rDate: $rightnow")
 
 write(file_out, "\r#### Define gates for time evolution ####")
 write(file_out, "\r")
-
+flush(file_out)
 
 ####### define time evolution operator #######
 if Mobile_DW == 1
@@ -248,29 +241,19 @@ else
   global H_time,gates=Ham_mobile_gates(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
 end
 global DWxMPO,DWyMPO,DWzMPO=DWC_operator_1D(N::Int,sites)
-write(file_out, "\r#### Work flow Information ####")
-write(file_out, "\r")
 
 
-
-
-####### define time evolution operator #######
+####### time evolution loops #######
 
 write(file_out, "\r#### Start calculation time evolution of state $band_evo ####")
 write(file_out, "\r")
+flush(file_out)
 
 psi_evo=MPS[]
-
 Ene_H0=[]
 Ene_H_time=[]
-
-Sz_i=[]
-Sy_i=[]
-Sx_i=[]
-
-Cx=[]
-Cy=[]
-Cz=[]
+S_site=[]
+DW_C=[]
 
 global psi_temp = apply(gates, psi[band_evo]; cutoff)
 push!(psi_evo,psi_temp)
@@ -291,13 +274,8 @@ for (i, t) in enumerate(0.0:tau:t_total)
   push!(Ene_H0,ene_temp)
   push!(Ene_H_time,ene_temp2)
 
-  push!(Sz_i,Sz)
-  push!(Sy_i,Sy)
-  push!(Sx_i,Sx)
-  
-  push!(Cx,DWxtemp)
-  push!(Cy,DWytemp)
-  push!(Cz,DWztemp)
+  push!(S_site,(Sz,Sy,Sx))
+  push!(DW_C,(DWztemp,DWytemp,DWxtemp))
 
   t≈t_total && break
     
@@ -333,17 +311,20 @@ if write_psi_evo == 1
    psi_evo_length=length(psi_evo)
    # Close the HDF5 file
    close(file_psi)
+
+
    write(file_out, "\r#### Psi_evo_$band_evo Saved ####")
    write(file_out, "\r")
    write(file_out, "\rPsi_evo_$band_evo length : $psi_evo_length")
    write(file_out, "\r")
-else
+   flush(file_out)
+ else
   
 end
 
 ###### Saving Data #########
    
-jldsave("time_evo_data.jld2"; Ene_H0,Ene_H_time,Sz_i,Sy_i,Sx_i,Cz,Cy,Cx)
+jldsave("time_evo_data.jld2"; Ene_H0,Ene_H_time,S_site,DW_C)
 
 ####### timer  ##################
 write(file_out, "\rSimulation Finished.")
