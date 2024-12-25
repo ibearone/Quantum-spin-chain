@@ -312,6 +312,7 @@ for (i, t) in enumerate(0.0:tau:t_total)
       write(file_out, "\rDate: $rightnow")
       write(file_out, "\r")
       flush(file_out)
+      GC.gc()
   end
 end
 
