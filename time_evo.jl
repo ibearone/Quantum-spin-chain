@@ -84,6 +84,7 @@ maxdim = read_input(file_in,"maxdim",Int,1)
 mindim = read_input(file_in,"mindim",Int,1)
 psi_lambda = read_input(file_in,"psi_lambda",Float64,0)
 if work_flow == "time_evo"
+    write_psi_evo = read_input(file_in,"write_psi_evo",Int,0)
     tau = read_input(file_in,"tau_dis",Float64,0)
     t_total = read_input(file_in,"t_total",Float64,0)
     band_evo = read_input(file_in,"band_evo",Int,0)
@@ -168,7 +169,11 @@ write(file_out, "\rmaxdim: $maxdim")
 write(file_out, "\rmindim: $mindim")
 write(file_out, "\rpsi_lambda: $psi_lambda")
 
+write(file_out, "\r#### Time evolution Parameters ####")
+write(file_out, "\r")
+
 if work_flow == "time_evo"
+    write(file_out, "\rwrite psi_evo: $write_psi_evo")
     write(file_out, "\rtau_dis: $tau")
     write(file_out, "\rt_total: $t_total")
     write(file_out, "\rband_evo: $band_evo")
@@ -312,27 +317,28 @@ end
 
 
 
+if write_psi_evo == 1
+ # Open an HDF5 file for writing with a name based on band_evo
+ file_psi = h5open(string("psi_evo_", band_evo, ".h5"), "w")
 
-# Open an HDF5 file for writing with a name based on band_evo
-file_psi = h5open(string("psi_evo_", band_evo, ".h5"), "w")
-
-# Iterate over each MPS in the psi_evo array
-for i in 1:length(psi_evo)
-  # Create a unique name for each MPS entry
-  evo_name = "psi_evo_$(i)"
+ # Iterate over each MPS in the psi_evo array
+ for i in 1:length(psi_evo)
+   # Create a unique name for each MPS entry
+   evo_name = "psi_evo_$(i)"
   
-  # Write the MPS to the HDF5 file under the unique name
-  write(file_psi, evo_name, psi_evo[i])
+   # Write the MPS to the HDF5 file under the unique name
+   write(file_psi, evo_name, psi_evo[i])
+ end
+   psi_evo_length=length(psi_evo)
+   # Close the HDF5 file
+   close(file_psi)
+   write(file_out, "\r#### Psi_evo_$band_evo Saved ####")
+   write(file_out, "\r")
+   write(file_out, "\rPsi_evo_$band_evo length : $psi_evo_length")
+   write(file_out, "\r")
+else
+  
 end
-psi_evo_length=length(psi_evo)
-# Close the HDF5 file
-close(file_psi)
-
-
-write(file_out, "\r#### Psi_evo_$band_evo Saved ####")
-write(file_out, "\r")
-write(file_out, "\rPsi_evo_$band_evo length : $psi_evo_length")
-write(file_out, "\r")
 
 ###### Saving Data #########
    
