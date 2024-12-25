@@ -21,7 +21,7 @@ using HDF5
 using JLD2
 #using DelimitedFiles
 using Dates
-
+using ITensorTDVP
 ########### Modules ##############
 include("read_input.jl")
 include("Hamiltonian.jl")
@@ -83,6 +83,7 @@ maxdim = read_input(file_in,"maxdim",Int,1)
 mindim = read_input(file_in,"mindim",Int,1)
 psi_lambda = read_input(file_in,"psi_lambda",Float64,0)
 if work_flow == "time_evo"
+    time_evo_method = read_input(file_in,"time_evo_method",String,2)
     write_psi_evo = read_input(file_in,"write_psi_evo",Int,0)
     tau = read_input(file_in,"tau_dis",Float64,0)
     t_total = read_input(file_in,"t_total",Float64,0)
@@ -175,6 +176,7 @@ write(file_out, "\r#### Time evolution Parameters ####")
 write(file_out, "\r")
 
 if work_flow == "time_evo"
+    write(file_out, "\rtime_evo_method: $time_evo_method")
     write(file_out, "\rwrite psi_evo: $write_psi_evo")
     write(file_out, "\rtau_dis: $tau")
     write(file_out, "\rt_total: $t_total")
@@ -242,54 +244,83 @@ flush(file_out)
 if write_psi_evo == 1
   psi_evo=MPS[]
 end
+
+
 Ene_H0=[]
 Ene_H_time=[]
 S_site=[]
 DW_C=[]
 DATE =[]
-global psi_temp = apply(gates, psi[band_evo]; cutoff)
-if write_psi_evo == 1
-  push!(psi_evo,psi_temp)
+
+if time_evo_method == "TEBD"
+    global psi_temp = apply(gates, psi[band_evo]; cutoff)
+    if write_psi_evo == 1
+      push!(psi_evo,psi_temp)
+    end
+      
+    for (i, t) in enumerate(0.0:tau:t_total)
+      #psi_t = psi_evo[i]
+
+      ene_temp=real(inner(psi_temp', H,psi_temp))
+      ene_temp2=real(inner(psi_temp', H_time,psi_temp))
+
+      Sz = expect(psi_temp, "Sz")
+      Sy = expect(psi_temp, "Sy")
+      Sx = expect(psi_temp, "Sx")
+
+      DWztemp=inner(psi_temp',DWzMPO,psi_temp)
+      DWytemp=inner(psi_temp',DWyMPO,psi_temp)
+      DWxtemp=inner(psi_temp',DWxMPO,psi_temp)
+
+      push!(Ene_H0,ene_temp)
+      push!(Ene_H_time,ene_temp2)
+
+      push!(S_site,(Sz,Sy,Sx))
+      push!(DW_C,(DWztemp,DWytemp,DWxtemp))
+
+      t≈t_total && break
+        
+      global psi_temp = apply(gates, psi_temp; cutoff)
+      normalize!(psi_temp)
+      if write_psi_evo == 1
+        push!(psi_evo,psi_temp)
+      end
+
+        if (i-1) % Int(t_total/tau/100) == 0 && i != 0
+          write(file_out, "\rTime step: $t/$t_total")
+          push!(DATE,Dates.Time(Dates.now()))
+          local rightnow=DATE[end]
+          write(file_out, "\rDate: $rightnow")
+          write(file_out, "\r")
+          flush(file_out)
+          GC.gc()
+      end
+    end
+
+ elseif time_evo_method == "TDVP"
+    step(; sweep) = sweep
+    current_time(; current_time) = current_time
+    return_state(; state) = state
+    measure_sz(; state) = expect(state, "Sz")
+    measure_sy(; state) = expect(state, "Sy")
+    measure_sx(; state) = expect(state, "Sx")
+    measure_Cz(; state) = inner(state',DWzMPO,state)
+    measure_Cy(; state) = inner(state',DWyMPO,state)
+    measure_Cx(; state) = inner(state',DWxMPO,state)
+
+    obs = observer(
+      "steps" => step, "times" => current_time, "states" => return_state,
+       "sz" => measure_sz, "sy" => measure_sy, "sx" => measure_sx,
+       "Cz" => measure_Cz, "Cy" => measure_Cy, "Cx" => measure_Cx
+    )
+
+    state = tdvp(H_time, -im*t_total, psi[band_evo]; time_step=-im*tau, cutoff, (step_observer!)=obs, outputlevel=0)
+    S_site=(obs.sz,obs.sy,obs.sx)
+    DW_C=(obs.Cz,obs.Cy,obs.Cx)
+else
+
 end
 
-for (i, t) in enumerate(0.0:tau:t_total)
-  #psi_t = psi_evo[i]
-
-  ene_temp=real(inner(psi_temp', H,psi_temp))
-  ene_temp2=real(inner(psi_temp', H_time,psi_temp))
-
-  Sz = expect(psi_temp, "Sz")
-  Sy = expect(psi_temp, "Sy")
-  Sx = expect(psi_temp, "Sx")
-  DWxtemp=inner(psi_temp',DWxMPO,psi_temp)
-  DWytemp=inner(psi_temp',DWyMPO,psi_temp)
-  DWztemp=inner(psi_temp',DWzMPO,psi_temp)
-
-  
-  push!(Ene_H0,ene_temp)
-  push!(Ene_H_time,ene_temp2)
-
-  push!(S_site,(Sz,Sy,Sx))
-  push!(DW_C,(DWztemp,DWytemp,DWxtemp))
-
-  t≈t_total && break
-    
-  global psi_temp = apply(gates, psi_temp; cutoff)
-  normalize!(psi_temp)
-  if write_psi_evo == 1
-    push!(psi_evo,psi_temp)
-  end
-
-    if (i-1) % Int(t_total/tau/100) == 0 && i != 0
-      write(file_out, "\rTime step: $t/$t_total")
-      push!(DATE,Dates.Time(Dates.now()))
-      local rightnow=DATE[end]
-      write(file_out, "\rDate: $rightnow")
-      write(file_out, "\r")
-      flush(file_out)
-      GC.gc()
-  end
-end
 write(file_out, "\rTime step: $t_total/$t_total")
 push!(DATE,Dates.Time(Dates.now()))
 rightnow=DATE[end]
