@@ -315,9 +315,22 @@ if time_evo_method == "TEBD"
        "Cz" => measure_Cz, "Cy" => measure_Cy, "Cx" => measure_Cx
     )
 
-    state = tdvp(H_time, -im*t_total, psi[band_evo]; time_step=-im*tau, cutoff, (step_observer!)=obs, outputlevel=0)
+    state = tdvp(H_time, -im*t_total, psi[band_evo]; time_step=-im*tau, cutoff, (step_observer!)=obs, outputlevel=1)
     S_site=(obs.sz,obs.sy,obs.sx)
     DW_C=(obs.Cz,obs.Cy,obs.Cx)
+    if write_psi_evo == 1
+     psi_evo=obs.states
+    end
+    if obs.steps % Int(t_total/tau/100) == 0 && obs.steps != 0
+      local t=obs.times
+      write(file_out, "\rTime step: $t/$t_total")
+      push!(DATE,Dates.Time(Dates.now()))
+      local rightnow=DATE[end]
+      write(file_out, "\rDate: $rightnow")
+      write(file_out, "\r")
+      flush(file_out)
+      GC.gc()
+  end
 else
 
 end
