@@ -244,7 +244,7 @@ Ene_H0=[]
 Ene_H_time=[]
 S_site=[]
 DW_C=[]
-
+DATE =[]
 global psi_temp = apply(gates, psi[band_evo]; cutoff)
 push!(psi_evo,psi_temp)
 for (i, t) in enumerate(0.0:tau:t_total)
