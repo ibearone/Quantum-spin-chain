@@ -164,10 +164,7 @@ write(file_out, "\rcutoff: $cutoff")
 write(file_out, "\rconverg: $converg")
 write(file_out, "\rnoise: $noise")
 write(file_out, "\rmax_sweep: $max_sweep")
-# if work_flow == "Continue"
-#     write(file_out, "\rband_min: $band_min")
-#    else
-# end
+
 write(file_out, "\rband_max: $band_max")
 write(file_out, "\rmaxdim: $maxdim")
 write(file_out, "\rmindim: $mindim")
@@ -201,7 +198,7 @@ end
 
 sites = siteinds(psi[1])
 
-write(file_out, "\rReading Psi_* finished.")
+write(file_out, "\rReading psi_$band_max finished.")
 write(file_out, "\r")
 
 
@@ -219,14 +216,6 @@ sweep_num=load("DMRG_data.jld2","sweep_num")
 write(file_out, "\rReading jld2 finished.")
 write(file_out, "\r")
 
-
-###### Reading Data #########
-
-
-DATE=[]
-push!(DATE,Dates.Time(Dates.now()))
-rightnow=DATE[end]
-write(file_out, "\rDate: $rightnow")
 
 write(file_out, "\r#### Define gates for time evolution ####")
 write(file_out, "\r")
@@ -249,6 +238,7 @@ write(file_out, "\r#### Start calculation time evolution of state $band_evo ####
 write(file_out, "\r")
 flush(file_out)
 
+####### Initialization ########
 psi_evo=MPS[]
 Ene_H0=[]
 Ene_H_time=[]
@@ -284,7 +274,7 @@ for (i, t) in enumerate(0.0:tau:t_total)
   push!(psi_evo,psi_temp)
 
     if (i-1) % 100 == 0 && i != 0
-      write(file_out, "\rtime step: $t")
+      write(file_out, "\rTime step: $t/$t_total")
       push!(DATE,Dates.Time(Dates.now()))
       local rightnow=DATE[end]
       write(file_out, "\rDate: $rightnow")
@@ -293,7 +283,7 @@ for (i, t) in enumerate(0.0:tau:t_total)
       GC.gc()
   end
 end
-write(file_out, "\rtime step: $t_total")
+write(file_out, "\rTime step: $t_total/$t_total")
 push!(DATE,Dates.Time(Dates.now()))
 rightnow=DATE[end]
 write(file_out, "\rDate: $rightnow")
