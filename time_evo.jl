@@ -283,7 +283,7 @@ for (i, t) in enumerate(0.0:tau:t_total)
   normalize!(psi_temp)
   push!(psi_evo,psi_temp)
 
-    if i+1 % 100 == 0 && i != 0
+    if (i-1) % 100 == 0 && i != 0
       write(file_out, "\rtime step: $t")
       push!(DATE,Dates.Time(Dates.now()))
       local rightnow=DATE[end]
@@ -294,22 +294,17 @@ for (i, t) in enumerate(0.0:tau:t_total)
   end
 end
 
-
+###### Saving psi_evo Data #########
 
 if write_psi_evo == 1
- # Open an HDF5 file for writing with a name based on band_evo
  file_psi = h5open(string("psi_evo_", band_evo, ".h5"), "w")
 
- # Iterate over each MPS in the psi_evo array
  for i in 1:length(psi_evo)
-   # Create a unique name for each MPS entry
    evo_name = "psi_evo_$(i)"
   
-   # Write the MPS to the HDF5 file under the unique name
    write(file_psi, evo_name, psi_evo[i])
  end
    psi_evo_length=length(psi_evo)
-   # Close the HDF5 file
    close(file_psi)
 
 
