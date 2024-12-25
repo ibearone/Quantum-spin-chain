@@ -239,26 +239,31 @@ write(file_out, "\r")
 flush(file_out)
 
 ####### Initialization ########
-psi_evo=MPS[]
+if write_psi_evo == 1
+  psi_evo=MPS[]
+end
 Ene_H0=[]
 Ene_H_time=[]
 S_site=[]
 DW_C=[]
 DATE =[]
 global psi_temp = apply(gates, psi[band_evo]; cutoff)
-push!(psi_evo,psi_temp)
+if write_psi_evo == 1
+  push!(psi_evo,psi_temp)
+end
+
 for (i, t) in enumerate(0.0:tau:t_total)
-  psi_t = psi_evo[i]
+  #psi_t = psi_evo[i]
 
-  ene_temp=real(inner(psi_t', H,psi_t))
-  ene_temp2=real(inner(psi_t', H_time,psi_t))
+  ene_temp=real(inner(psi_temp', H,psi_temp))
+  ene_temp2=real(inner(psi_temp', H_time,psi_temp))
 
-  Sz = expect(psi_t, "Sz")
-  Sy = expect(psi_t, "Sy")
-  Sx = expect(psi_t, "Sx")
-  DWxtemp=inner(psi_t',DWxMPO,psi_t)
-  DWytemp=inner(psi_t',DWyMPO,psi_t)
-  DWztemp=inner(psi_t',DWzMPO,psi_t)
+  Sz = expect(psi_temp, "Sz")
+  Sy = expect(psi_temp, "Sy")
+  Sx = expect(psi_temp, "Sx")
+  DWxtemp=inner(psi_temp',DWxMPO,psi_temp)
+  DWytemp=inner(psi_temp',DWyMPO,psi_temp)
+  DWztemp=inner(psi_temp',DWzMPO,psi_temp)
 
   
   push!(Ene_H0,ene_temp)
@@ -271,7 +276,9 @@ for (i, t) in enumerate(0.0:tau:t_total)
     
   global psi_temp = apply(gates, psi_temp; cutoff)
   normalize!(psi_temp)
-  push!(psi_evo,psi_temp)
+  if write_psi_evo == 1
+    push!(psi_evo,psi_temp)
+  end
 
     if (i-1) % 100 == 0 && i != 0
       write(file_out, "\rTime step: $t/$t_total")
