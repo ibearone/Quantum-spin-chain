@@ -294,10 +294,11 @@ if time_evo_method == "TEBD"
       end
 
         if (i-1) % Int(t_total/tau/100) == 0 && i != 0
-          write(file_out, "\rTime step: $t/$t_total")
           push!(DATE,Dates.Time(Dates.now()))
           local rightnow=DATE[end]
-          write(file_out, "\rDate: $rightnow")
+          local E0_print=round(Ene_H0[i],digits=8)
+          local Et_print=round(Ene_H_time[i],digits=8)
+          write(file_out, "\rTime step: $t/$t_total   Ene0 = $E0_print   Ene0 = $Et_print  Date: $rightnow")
           write(file_out, "\r")
           flush(file_out)
           GC.gc()
@@ -310,36 +311,10 @@ if time_evo_method == "TEBD"
   write(file_out, "\r!!! Start TDVP Calculation !!!")
   write(file_out, "\r")
     step(; sweep) = sweep
-    #begin
-      #if sweep % Int(t_total/tau/100) == 0 && sweep != 0
-      #  println(file_out,"Current step: ", sweep)
-      #end
-    #  return 
-    #end
-    current_time(; sweep,current_time) = current_time
-    #begin
-      # if sweep % Int(t_total/tau/100) == 0 && sweep != 0
-      #   println(file_out,"Current time: ", round(real(current_time*im),digits=2),"/",t_total, "(real time)")
-      # end
-    #  return current_time
-    #end
+    current_time(; current_time) = current_time
     return_state(; state) = state
-    measure_Ene0(; sweep,state)= real(inner(state', H, state))
-    #begin
-    #   local val = 
-      # if sweep % Int(t_total/tau/100) == 0 && sweep != 0
-      #   println(file_out,"Ene0 = ", round(val,digits=8))
-      # end
-    #  return val
-    #end
-    measure_Ene_time(; sweep,state)= real(inner(state', H_time, state))
-    #begin
-      local val = 
-      # if sweep % Int(t_total/tau/100) == 0 && sweep != 0
-      #   println(file_out,"Ene_time = ", round(val,digits=8))
-      # end
-    #  return val
-    #end
+    measure_Ene0(; state) = real(inner(state', H, state))
+    measure_Ene_time(; state) = real(inner(state', H_time, state))
 
     timer(; sweep, current_time, state) = begin
       if sweep % Int(t_total/tau/100) == 0 && sweep != 0
@@ -373,16 +348,6 @@ if time_evo_method == "TEBD"
     if write_psi_evo == 1
      psi_evo=obs.states
     end
-    # if obs.steps % Int(t_total/tau/100) == 0 && obs.steps != 0
-    #   local t=obs.times
-    #   write(file_out, "\rTime step: $t/$t_total")
-    #   push!(DATE,Dates.Time(Dates.now()))
-    #   local rightnow=DATE[end]
-    #   write(file_out, "\rDate: $rightnow")
-    #   write(file_out, "\r")
-    #   flush(file_out)
-    #   GC.gc()
-    # end
 else
 
 end
