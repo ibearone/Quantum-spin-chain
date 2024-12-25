@@ -201,7 +201,7 @@ end
 
 sites = siteinds(psi[1])
 
-write(file_out, "\rReading psi_$band_max finished.")
+write(file_out, "\rRead psi_$band_max finished.")
 write(file_out, "\r")
 
 
@@ -209,14 +209,14 @@ f = h5open("Ham.h5","r")
 H=read(f,"Hamiltonian",MPO)
 close(f)
 
-write(file_out, "\rReading Hamiltonian finished.")
+write(file_out, "\rRead Hamiltonian finished.")
 write(file_out, "\r")
 
 energy=load("DMRG_data.jld2","energy")
 E=load("DMRG_data.jld2","E")
 sweep_num=load("DMRG_data.jld2","sweep_num")
 
-write(file_out, "\rReading jld2 finished.")
+write(file_out, "\rRead jld2 finished.")
 write(file_out, "\r")
 
 
@@ -276,8 +276,14 @@ if time_evo_method == "TEBD"
       push!(Ene_H0,ene_temp)
       push!(Ene_H_time,ene_temp2)
 
-      push!(S_site,(Sz,Sy,Sx))
-      push!(DW_C,(DWztemp,DWytemp,DWxtemp))
+      #push!(S_site,(Sz,Sy,Sx))
+      push!(S_temp_z,Sz)
+      push!(S_temp_y,Sy)
+      push!(S_temp_x,Sx)
+      #push!(DW_C,(DWztemp,DWytemp,DWxtemp))
+      push!(DW_temp_z,DWztemp)
+      push!(DW_temp_y,DWytemp)
+      push!(DW_temp_x,DWxtemp)
 
       t≈t_total && break
         
@@ -297,11 +303,55 @@ if time_evo_method == "TEBD"
           GC.gc()
       end
     end
+    S_site=(S_temp_z,S_temp_y,S_temp_x)
+    DW_C=(DW_temp_z,DW_temp_y,DW_temp_x)
 
  elseif time_evo_method == "TDVP"
+  write(file_out, "\r!!! Start TDVP Calculation !!!")
+  write(file_out, "\r")
     step(; sweep) = sweep
-    current_time(; current_time) = current_time
+    #begin
+      #if sweep % Int(t_total/tau/100) == 0 && sweep != 0
+      #  println(file_out,"Current step: ", sweep)
+      #end
+    #  return 
+    #end
+    current_time(; sweep,current_time) = current_time
+    #begin
+      # if sweep % Int(t_total/tau/100) == 0 && sweep != 0
+      #   println(file_out,"Current time: ", round(real(current_time*im),digits=2),"/",t_total, "(real time)")
+      # end
+    #  return current_time
+    #end
     return_state(; state) = state
+    measure_Ene0(; sweep,state)= real(inner(state', H, state))
+    #begin
+    #   local val = 
+      # if sweep % Int(t_total/tau/100) == 0 && sweep != 0
+      #   println(file_out,"Ene0 = ", round(val,digits=8))
+      # end
+    #  return val
+    #end
+    measure_Ene_time(; sweep,state)= real(inner(state', H_time, state))
+    #begin
+      local val = 
+      # if sweep % Int(t_total/tau/100) == 0 && sweep != 0
+      #   println(file_out,"Ene_time = ", round(val,digits=8))
+      # end
+    #  return val
+    #end
+
+    timer(; sweep, current_time, state) = begin
+      if sweep % Int(t_total/tau/100) == 0 && sweep != 0
+        push!(DATE,Dates.Time(Dates.now()))
+        local rightnow=DATE[end]
+        println(file_out,"Time step: ", round(real(current_time*im),digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H, state)),digits=8),"   Ene_time = ", round(real(inner(state', H_time, state)),digits=8),"   Date: ",rightnow)
+        write(file_out, "\r")
+        flush(file_out)
+      end
+      return nothing
+    end
+
     measure_sz(; state) = expect(state, "Sz")
     measure_sy(; state) = expect(state, "Sy")
     measure_sx(; state) = expect(state, "Sx")
@@ -310,27 +360,29 @@ if time_evo_method == "TEBD"
     measure_Cx(; state) = inner(state',DWxMPO,state)
 
     obs = observer(
-      "steps" => step, "times" => current_time, "states" => return_state,
+      "steps" => step, "times" => current_time, "states" => return_state, "Ene0" => measure_Ene0, "Ene_time" => measure_Ene_time,
        "sz" => measure_sz, "sy" => measure_sy, "sx" => measure_sx,
-       "Cz" => measure_Cz, "Cy" => measure_Cy, "Cx" => measure_Cx
+       "Cz" => measure_Cz, "Cy" => measure_Cy, "Cx" => measure_Cx,"timer" => timer
     )
 
-    state = tdvp(H_time, -im*t_total, psi[band_evo]; time_step=-im*tau, cutoff, (step_observer!)=obs, outputlevel=1)
+    state = tdvp(H_time, -im*t_total, psi[band_evo]; time_step=-im*tau, cutoff, (step_observer!)=obs, outputlevel=0)
+    Ene_H0 = obs.Ene0
+    Ene_H_time = obs.Ene_time
     S_site=(obs.sz,obs.sy,obs.sx)
     DW_C=(obs.Cz,obs.Cy,obs.Cx)
     if write_psi_evo == 1
      psi_evo=obs.states
     end
-    if obs.steps % Int(t_total/tau/100) == 0 && obs.steps != 0
-      local t=obs.times
-      write(file_out, "\rTime step: $t/$t_total")
-      push!(DATE,Dates.Time(Dates.now()))
-      local rightnow=DATE[end]
-      write(file_out, "\rDate: $rightnow")
-      write(file_out, "\r")
-      flush(file_out)
-      GC.gc()
-  end
+    # if obs.steps % Int(t_total/tau/100) == 0 && obs.steps != 0
+    #   local t=obs.times
+    #   write(file_out, "\rTime step: $t/$t_total")
+    #   push!(DATE,Dates.Time(Dates.now()))
+    #   local rightnow=DATE[end]
+    #   write(file_out, "\rDate: $rightnow")
+    #   write(file_out, "\r")
+    #   flush(file_out)
+    #   GC.gc()
+    # end
 else
 
 end
