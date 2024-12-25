@@ -305,7 +305,7 @@ for (i, t) in enumerate(0.0:tau:t_total)
   normalize!(psi_temp)
   push!(psi_evo,psi_temp)
 
-    if i+1 % 10 == 0 && i != 0
+    if i+1 % 100 == 0 && i != 0
       write(file_out, "\rtime step: $t")
       push!(DATE,Dates.Time(Dates.now()))
       local rightnow=DATE[end]
