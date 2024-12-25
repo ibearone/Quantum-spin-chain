@@ -22,6 +22,7 @@ using JLD2
 #using DelimitedFiles
 using Dates
 using ITensorTDVP
+using Observers
 ########### Modules ##############
 include("read_input.jl")
 include("Hamiltonian.jl")
