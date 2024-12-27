@@ -30,7 +30,7 @@ include("time_evo_gate.jl")
 include("ladder_lattice.jl")
 include("Spin_Operator.jl")
 include("DW_chirality_operators.jl")
-
+include("updaters.jl")
 ########## Reading Inputs (Hamiltonian) ############
 
 file_in = open("Input", "r")
@@ -90,6 +90,13 @@ if work_flow == "time_evo"
     t_total = read_input(file_in,"t_total",Float64,0)
     band_evo = read_input(file_in,"band_evo",Int,0)
    else
+end
+if time_evo_method == "TDVP_Ht"
+  dhx = read_input(file_in,"dhx",Float64,0)
+  dhy = read_input(file_in,"dhy",Float64,0)
+  omega = read_input(file_in,"omega",Float64,0)
+  nsite = read_input(file_in,"nsite",Int,0)
+  band_tar = read_input(file_in,"band_tar",Int,0)
 end
 close(file_in)
 
@@ -184,6 +191,14 @@ if work_flow == "time_evo"
     write(file_out, "\rband_evo: $band_evo")
    else
 end
+if time_evo_method == "TDVP_Ht"
+  write(file_out, "\rdhx: $dhx")
+  write(file_out, "\rdhy: $dhy")
+  write(file_out, "\romega: $omega")
+  write(file_out, "\rnsite: $nsite")
+  write(file_out, "\rband_tar: $band_tar")
+end
+
 write(file_out, "\r")
 
 
@@ -348,6 +363,69 @@ if time_evo_method == "TEBD"
     if write_psi_evo == 1
      psi_evo=obs.states
     end
+  elseif time_evo_method == "TDVP_Ht"
+    write(file_out, "\r!!! Start TDVP Calculation with time dependent Hamiltonian !!!")
+    write(file_out, "\r")
+
+    f0=map(ω -> (t -> 1), 0)
+    f1cos=map(ω -> (t -> cos(ω * t)), omega)
+    f1sin=map(ω -> (t -> sin(ω * t)), omega)
+    
+    f = (f0,f1cos,f1sin)
+    H1cos=Ham_time_dependent_gates(N,sites,dhx,dhy)
+    H = (H_time , H1cos);
+    Ht=TimeDependentSum(f, H);
+
+      step(; sweep) = sweep
+      current_time(; current_time) = current_time
+      return_state(; state) = state
+      measure_Ene0(; state) = real(inner(state',H_time, state))
+      #measure_Ene_time(; state) = real(inner(state', H_time, state))
+  
+      timer(; sweep, current_time, state) = begin
+        if Int(round(t_total/tau)/100) ==0
+          push!(DATE,Dates.Time(Dates.now()))
+          local rightnow=DATE[end]
+          println(file_out,"Time step: ", round(real(current_time*im),digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H_time, state)),digits=8),"   Date: ",rightnow)
+          write(file_out, "\r")
+          flush(file_out)
+        else
+          if sweep % Int(round(t_total/tau)/100) == 0 && sweep != 0
+            push!(DATE,Dates.Time(Dates.now()))
+            local rightnow=DATE[end]
+            println(file_out,"Time step: ", round(real(current_time*im),digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H_time, state)),digits=8),"   Date: ",rightnow)
+            write(file_out, "\r")
+            flush(file_out)
+          end
+        end
+        return nothing
+      end
+  
+      measure_p(; state) = abs(inner(state,psi[band_tar]))^2
+      measure_sz(; state) = expect(state, "Sz")
+      measure_sy(; state) = expect(state, "Sy")
+      measure_sx(; state) = expect(state, "Sx")
+      measure_Cz(; state) = inner(state',DWzMPO,state)
+      measure_Cy(; state) = inner(state',DWyMPO,state)
+      measure_Cx(; state) = inner(state',DWxMPO,state)
+  
+      obs = observer(
+        "steps" => step, "times" => current_time, "states" => return_state, "Ene0" => measure_Ene0, #"Ene_time" => measure_Ene_time,
+         "sz" => measure_sz, "sy" => measure_sy, "sx" => measure_sx,
+         "Cz" => measure_Cz, "Cy" => measure_Cy, "Cx" => measure_Cx,"timer" => timer, "p" => measure_p
+      )
+    
+      #state = tdvp(H_time, -im*t_total, psi[band_evo]; time_step=-im*tau, cutoff, (step_observer!)=obs, outputlevel=0)
+      state = tdvp( Ht,-im*t_total,psi[band_evo];updater=krylov_updater,updater_kwargs=(; tol=converg, eager=true),time_step=-im*tau,cutoff,nsite, (step_observer!)=obs,outputlevel=0)
+      Ene_H0 = obs.Ene0
+      #Ene_H_time = obs.Ene_time
+      p01=obs.p
+      S_site=(obs.sz,obs.sy,obs.sx)
+      DW_C=(obs.Cz,obs.Cy,obs.Cx)
+      if write_psi_evo == 1
+       psi_evo=obs.states
+      end
+
 else
 
 end
@@ -385,8 +463,14 @@ if write_psi_evo == 1
 end
 
 ###### Saving Data #########
-   
-jldsave("time_evo_data.jld2"; Ene_H0,Ene_H_time,S_site,DW_C)
+
+if time_evo_method == "TEBD"
+  jldsave("time_evo_data.jld2"; Ene_H0,Ene_H_time,S_site,DW_C)
+ elseif time_evo_method == "TDVP"
+  jldsave("time_evo_data.jld2"; Ene_H0,Ene_H_time,S_site,DW_C)
+ elseif time_evo_method == "TDVP_Ht"
+  jldsave("time_evo_data.jld2"; Ene_H0,S_site,DW_C,p01)
+ end
 
 ####### timer  ##################
 write(file_out, "\rSimulation Finished.")

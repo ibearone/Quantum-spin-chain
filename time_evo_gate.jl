@@ -63,3 +63,14 @@ function Ham_mobile_gates(N::Int,sites,NBC1::Int,NBC2::Int,J::Float64,Kz::Float6
 
  return H,gates
 end
+
+function Ham_time_dependent_gates(N::Int,sites,dhx::Float64,dhy::Float64)
+  global os_Ham= OpSum()
+  for i = 1:N
+    global os_Ham += dhy,"Sy",i
+    global os_Ham += dhx,"Sx",i
+end
+global H=MPO(os_Ham,sites)
+
+return H
+end
