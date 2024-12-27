@@ -383,14 +383,14 @@ if time_evo_method == "TEBD"
       #measure_Ene_time(; state) = real(inner(state', H_time, state))
   
       timer(; sweep, current_time, state) = begin
-        if Int(round(t_total/tau)/100) ==0
+        if Int(round(t_total/tau/100)) ==0
           push!(DATE,Dates.Time(Dates.now()))
           local rightnow=DATE[end]
           println(file_out,"Time step: ", round(real(current_time*im),digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H_time, state)),digits=8),"   Date: ",rightnow)
           write(file_out, "\r")
           flush(file_out)
         else
-          if sweep % Int(round(t_total/tau)/100) == 0 && sweep != 0
+          if sweep % Int(round(t_total/tau/100)) == 0 && sweep != 0
             push!(DATE,Dates.Time(Dates.now()))
             local rightnow=DATE[end]
             println(file_out,"Time step: ", round(real(current_time*im),digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H_time, state)),digits=8),"   Date: ",rightnow)
