@@ -335,7 +335,7 @@ if time_evo_method == "TEBD"
       if sweep % Int(t_total/tau/100) == 0 && sweep != 0
         push!(DATE,Dates.Time(Dates.now()))
         local rightnow=DATE[end]
-        println(file_out,"Time step: ", round(real(current_time*im),digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H, state)),digits=8),"   Ene_time = ", round(real(inner(state', H_time, state)),digits=8),"   Date: ",rightnow)
+        println(file_out,"Time step: ", round(current_time,digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H, state)),digits=8),"   Ene_time = ", round(real(inner(state', H_time, state)),digits=8),"   Date: ",rightnow)
         write(file_out, "\r")
         flush(file_out)
       end
@@ -355,7 +355,7 @@ if time_evo_method == "TEBD"
        "Cz" => measure_Cz, "Cy" => measure_Cy, "Cx" => measure_Cx,"timer" => timer
     )
 
-    state = tdvp(H_time, -im*t_total, psi[band_evo]; time_step=-im*tau, cutoff, (step_observer!)=obs, outputlevel=0)
+    state = tdvp(-im*H_time, t_total, psi[band_evo]; time_step=tau, cutoff, (step_observer!)=obs, outputlevel=0)
     Ene_H0 = obs.Ene0
     Ene_H_time = obs.Ene_time
     S_site=(obs.sz,obs.sy,obs.sx)
@@ -393,7 +393,7 @@ if time_evo_method == "TEBD"
           if sweep % Int(round(t_total/tau/100)) == 0 && sweep != 0
             push!(DATE,Dates.Time(Dates.now()))
             local rightnow=DATE[end]
-            println(file_out,"Time step: ", round(real(current_time*im),digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H_time, state)),digits=8),"   Date: ",rightnow)
+            println(file_out,"Time step: ", round(current_time,digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H_time, state)),digits=8),"   Date: ",rightnow)
             write(file_out, "\r")
             flush(file_out)
           end
@@ -416,7 +416,7 @@ if time_evo_method == "TEBD"
       )
     
       #state = tdvp(H_time, -im*t_total, psi[band_evo]; time_step=-im*tau, cutoff, (step_observer!)=obs, outputlevel=0)
-      state = tdvp( Ht,-im*t_total,psi[band_evo];updater=krylov_updater,updater_kwargs=(; tol=converg, eager=true),time_step=-im*tau,cutoff,nsite, (step_observer!)=obs,outputlevel=0)
+      state = tdvp( -im*Ht,t_total,psi[band_evo];updater=krylov_updater,updater_kwargs=(; tol=converg, eager=true),time_step=tau,cutoff,nsite, (step_observer!)=obs,outputlevel=0)
       Ene_H0 = obs.Ene0
       #Ene_H_time = obs.Ene_time
       p01=obs.p
