@@ -10,7 +10,8 @@
 ############################################# 
 ########## Initialization ############
 using ITensors
-using ITensors.HDF5
+using ITensorMPS
+using HDF5
 using LaTeXStrings
 #using Plots
 using JLD2
