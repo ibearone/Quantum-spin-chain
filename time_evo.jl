@@ -37,7 +37,7 @@ file_in = open("Input", "r")
 
 Lattice_type = read_input(file_in,"Lattice",Int,0)
 Mobile_DW = read_input(file_in,"Mobile_DW",Int,0)
-if Lattice_type ==1
+if Lattice_type ==1 || Lattice_type == 5
     N  = read_input(file_in,"N",Int,0)
     J  = read_input(file_in,"J",Float64,0)
     if Mobile_DW == 1
@@ -124,7 +124,7 @@ write(file_out, "\r")
 write(file_out, "\rLattice Model: $Lattice_type ")
 write(file_out, "\rMobile_DW: $Mobile_DW ")
 
-if Lattice_type == 1
+if Lattice_type == 1 || Lattice_type ==5
     write(file_out, "\rSite Number 'N': $N")
     if Mobile_DW == 1
         write(file_out, "\rSite of BC 'NBC': $NBC")
@@ -240,14 +240,26 @@ write(file_out, "\r")
 flush(file_out)
 
 ####### define time evolution operator #######
-if Mobile_DW == 1
-  global H_time,gates=Ham_mobile_gates(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
+if Lattice_type == 1 
+  if Mobile_DW == 1
+    global H_time,gates=Ham_mobile_gates(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
 
+  else
+    NBC=[1,N]
+    global H_time,gates=Ham_mobile_gates(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
+  end
+  global DWxMPO,DWyMPO,DWzMPO=DWC_operator_1D(N::Int,sites)
+elseif Lattice_type ==5
+  global H_time=H
+  global DWxMPO,DWyMPO,DWzMPO=DWC_operator_1D(N::Int,sites)
 else
-  NBC=[1,N]
-  global H_time,gates=Ham_mobile_gates(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
+  write(file_out, "\rHamiltonian not assigned.")
+  push!(DATE,Dates.Time(Dates.now()))
+  rightnow=DATE[end]
+  write(file_out, "\rDate: $rightnow")
+  write(file_out, "\r")
+  exit()
 end
-global DWxMPO,DWyMPO,DWzMPO=DWC_operator_1D(N::Int,sites)
 
 
 ####### time evolution loops #######
@@ -439,7 +451,19 @@ write(file_out, "\rFinished time evolution of state $band_evo")
 flush(file_out)
 GC.gc()
 
-###### Saving psi_evo Data #########
+###### Saving psi_evo Data #######
+if time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP"
+file_psi = h5open(string("psi_evo_end_",band_evo,".h5"),"w")
+    write(file_psi,"psi",state)
+    close(file_psi)
+
+elseif time_evo_method == "TEBD"
+  file_psi = h5open(string("psi_evo_end_",band_evo,".h5"),"w")
+  write(file_psi,"psi",psi_temp)
+  close(file_psi)
+else
+
+end
 
 if write_psi_evo == 1
  file_psi = h5open(string("psi_evo_", band_evo, ".h5"), "w")

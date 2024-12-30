@@ -34,7 +34,7 @@ file_in = open("Input", "r")
 
 Lattice_type = read_input(file_in,"Lattice",Int,0)
 Mobile_DW = read_input(file_in,"Mobile_DW",Int,0)
-if Lattice_type ==1
+if Lattice_type ==1 || Lattice_type ==5
     N  = read_input(file_in,"N",Int,0)
     J  = read_input(file_in,"J",Float64,0)
     if Mobile_DW == 1
@@ -104,7 +104,7 @@ write(file_out, "\r")
 write(file_out, "\rLattice Model: $Lattice_type ")
 write(file_out, "\rMobile_DW: $Mobile_DW ")
 
-if Lattice_type == 1
+if Lattice_type == 1 || Lattice_type ==5
     write(file_out, "\rSite Number 'N': $N")
     if Mobile_DW == 1
         write(file_out, "\rSite of BC 'NBC': $NBC")
@@ -202,6 +202,12 @@ if work_flow == "Start"
         else
             global H,sites=Heisenberg_Ham_ladder_single(Nx,Ny,Nc,J_inter,J,Kz,Ky,hx,hy,hz,BC_2D)
         end
+    elseif Lattice_type ==5
+        sites = siteinds("S=1/2",N)
+        os_Ham = OpSum()
+        os_Ham += hz, "Sz", 1
+        os_Ham += 2*hz, "Sz", 2  
+        global H=MPO(os_Ham,sites)
     end
 
     ####### timer  ##################
@@ -257,7 +263,7 @@ global SztotMPO,SytotMPO,SxtotMPO = Tot_spin_Op(sites)
 
 ##### Initialization for DMRG ######
 
-if Initial_Condition == "DW" || "Variation"
+if Initial_Condition == "DW" || Initial_Condition == "Variation"
     if Lattice_type ==1
     state=[n< (N+1)/2 ? "Up" : "Dn" for n=1:N]
     elseif Lattice_type == 2 || Lattice_type ==3 || Lattice_type ==4
