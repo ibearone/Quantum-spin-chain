@@ -88,6 +88,7 @@ if work_flow == "time_evo"
     write_psi_evo = read_input(file_in,"write_psi_evo",Int,0)
     tau = read_input(file_in,"tau_dis",Float64,0)
     t_total = read_input(file_in,"t_total",Float64,0)
+    continue_evo = read_input(file_in,"continue_evo",Int,0)
     band_evo = read_input(file_in,"band_evo",Int,0)
    else
 end
@@ -188,6 +189,7 @@ if work_flow == "time_evo"
     write(file_out, "\rwrite psi_evo: $write_psi_evo")
     write(file_out, "\rtau_dis: $tau")
     write(file_out, "\rt_total: $t_total")
+    write(file_out, "\rcontinue_evo: $continue_evo")
     write(file_out, "\rband_evo: $band_evo")
    else
 end
@@ -208,16 +210,30 @@ write(file_out, "\r")
 ###### Reading Data #########
 psi=[]
 for i=1:band_max
-    f = h5open(string("psi_",i,".h5"),"r")
-    psi_temp=read(f,"psi",MPS)
-    close(f)
-    push!(psi,psi_temp)
+ f = h5open(string("psi_",i,".h5"),"r")
+ psi_temp=read(f,"psi",MPS)
+  close(f)
+  push!(psi,psi_temp)
 end
+write(file_out, "\rRead psi_$band_max finished.")
+write(file_out, "\r")
+
+psi_evo=[]
+
+if continue_evo == 1
+   f = h5open(string("psi_evo_end_",band_evo,".h5"),"r")
+  global psi_evo_end=read(f,"psi",MPS)
+  close(f)
+  #push!(psi_evo,psi_temp)
+  write(file_out, "\rRead psi_evo_end_$band_max finished.")
+  write(file_out, "\r")
+else
+end
+
 
 sites = siteinds(psi[1])
 
-write(file_out, "\rRead psi_$band_max finished.")
-write(file_out, "\r")
+
 
 
 f = h5open("Ham.h5","r")
@@ -279,9 +295,16 @@ Ene_H_time=[]
 S_site=[]
 DW_C=[]
 DATE =[]
+psi_init=[]
+if continue_evo == 1
+  global psi_init=psi_evo_end
+else
+  global psi_init=psi[band_evo]
+end
 
 if time_evo_method == "TEBD"
-    global psi_temp = apply(gates, psi[band_evo]; cutoff)
+
+    global psi_temp = apply(gates, psi_init; cutoff)
     if write_psi_evo == 1
       push!(psi_evo,psi_temp)
     end
@@ -367,7 +390,7 @@ if time_evo_method == "TEBD"
        "Cz" => measure_Cz, "Cy" => measure_Cy, "Cx" => measure_Cx,"timer" => timer
     )
 
-    state = tdvp(-im*H_time, t_total, psi[band_evo]; time_step=tau, cutoff, (step_observer!)=obs, outputlevel=0)
+    state = tdvp(-im*H_time, t_total, psi_init; time_step=tau, cutoff, (step_observer!)=obs, outputlevel=0)
     Ene_H0 = obs.Ene0
     Ene_H_time = obs.Ene_time
     S_site=(obs.sz,obs.sy,obs.sx)
@@ -426,9 +449,9 @@ if time_evo_method == "TEBD"
          "sz" => measure_sz, "sy" => measure_sy, "sx" => measure_sx,
          "Cz" => measure_Cz, "Cy" => measure_Cy, "Cx" => measure_Cx,"timer" => timer, "p" => measure_p
       )
-    
+
       #state = tdvp(H_time, -im*t_total, psi[band_evo]; time_step=-im*tau, cutoff, (step_observer!)=obs, outputlevel=0)
-      state = tdvp( -im*Ht,t_total,psi[band_evo];updater=krylov_updater,updater_kwargs=(; tol=converg, eager=true),time_step=tau,cutoff,nsite, (step_observer!)=obs,outputlevel=0)
+      state = tdvp( -im*Ht,t_total,psi_init;updater=krylov_updater,updater_kwargs=(; tol=converg, eager=true),time_step=tau,cutoff,nsite, (step_observer!)=obs,outputlevel=0)
       Ene_H0 = obs.Ene0
       #Ene_H_time = obs.Ene_time
       p01=obs.p
