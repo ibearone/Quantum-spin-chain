@@ -50,6 +50,7 @@ if Lattice_type ==1 || Lattice_type == 5
     J_inter= read_input(file_in,"J_in",Float64,0)
     J  = read_input(file_in,"J_ex",Float64,0)
     BC_2D = read_input(file_in,"Bondary Condition",Int,0)
+
  elseif Lattice_type == 4 
     Nx  = read_input(file_in,"Nx",Int,0)
     Ny  = read_input(file_in,"Ny",Int,0)
@@ -83,6 +84,7 @@ band_max = read_input(file_in,"band_max",Int,0)
 maxdim = read_input(file_in,"maxdim",Int,1)
 mindim = read_input(file_in,"mindim",Int,1)
 psi_lambda = read_input(file_in,"psi_lambda",Float64,0)
+
 if work_flow == "time_evo"
     time_evo_method = read_input(file_in,"time_evo_method",String,2)
     write_psi_evo = read_input(file_in,"write_psi_evo",Int,0)
@@ -92,6 +94,7 @@ if work_flow == "time_evo"
     band_evo = read_input(file_in,"band_evo",Int,0)
    else
 end
+
 if time_evo_method == "TDVP_Ht"
   dhx = read_input(file_in,"dhx",Float64,0)
   dhy = read_input(file_in,"dhy",Float64,0)
@@ -103,6 +106,7 @@ close(file_in)
 
 ########## End of Reading Inputs ############
 
+DATE =[]
 ########## Writing Oututs ############
 if work_flow == "time_evo"
  file_out = open("Output_evo", "w")
@@ -193,6 +197,7 @@ if work_flow == "time_evo"
     write(file_out, "\rband_evo: $band_evo")
    else
 end
+
 if time_evo_method == "TDVP_Ht"
   write(file_out, "\rdhx: $dhx")
   write(file_out, "\rdhy: $dhy")
@@ -210,35 +215,31 @@ write(file_out, "\r")
 ###### Reading Data #########
 psi=[]
 for i=1:band_max
- f = h5open(string("psi_",i,".h5"),"r")
- psi_temp=read(f,"psi",MPS)
-  close(f)
+ file_psi = h5open(string("psi_",i,".h5"),"r")
+ psi_temp=read(file_psi,"psi",MPS)
+  close(file_psi)
   push!(psi,psi_temp)
 end
 write(file_out, "\rRead psi_$band_max finished.")
 write(file_out, "\r")
 
-psi_evo=[]
+
 
 if continue_evo == 1
-   f = h5open(string("psi_evo_end_",band_evo,".h5"),"r")
-  global psi_evo_end=read(f,"psi",MPS)
-  close(f)
+   file_psi_evo_end = h5open(string("psi_evo_end_",band_evo,".h5"),"r")
+  global psi_evo_end=read(file_psi_evo_end,"psi",MPS)
+  close(file_psi_evo_end)
   #push!(psi_evo,psi_temp)
   write(file_out, "\rRead psi_evo_end_$band_max finished.")
   write(file_out, "\r")
 else
 end
 
-
 sites = siteinds(psi[1])
 
-
-
-
-f = h5open("Ham.h5","r")
-H=read(f,"Hamiltonian",MPO)
-close(f)
+file_ham = h5open("Ham.h5","r")
+H=read(file_ham,"Hamiltonian",MPO)
+close(file_ham)
 
 write(file_out, "\rRead Hamiltonian finished.")
 write(file_out, "\r")
@@ -289,17 +290,59 @@ if write_psi_evo == 1
   psi_evo=MPS[]
 end
 
+if continue_evo == 0
+  Ene_H0=[]
+  Ene_H_time=[]
+  S_site=[]
+  DW_C=[]
+  p01=[]
 
-Ene_H0=[]
-Ene_H_time=[]
-S_site=[]
-DW_C=[]
-DATE =[]
+  elseif continue_evo == 1
+    if time_evo_method == "TEBD" || time_evo_method == "TDVP"
+      Ene_H0=load("time_evo_data.jld2","Ene_H0")
+      Ene_H_time=load("time_evo_data.jld2","Ene_H_time")
+      S_site=load("time_evo_data.jld2","S_site")
+      DW_C=load("time_evo_data.jld2","DW_C")
+    elseif time_evo_method == "TDVP_Ht"
+      Ene_H0=load("time_evo_data.jld2","Ene_H0")
+      S_site=load("time_evo_data.jld2","S_site")
+      DW_C=load("time_evo_data.jld2","DW_C")
+      p01=load("time_evo_data.jld2","p01")
+    end
+    if write_psi_evo == 1
+      file_psi_evo = h5open(string("psi_evo_", band_evo, ".h5"), "r")
+      function detect_psi_evo_length(file)
+        count = 0
+        for key in keys(file)
+            if occursin(r"^psi_evo_\d+$", key)  # Regex to match "psi_evo_<number>"
+                count += 1
+            end
+        end
+        return count
+      end
+      
+      # Detect the length automatically
+      Psi_evo_length = detect_psi_evo_length(file_psi_evo)
+
+      for i in 1:Psi_evo_length
+        evo_name = "psi_evo_$(i)"        
+         local mps = read(file_psi_evo, evo_name,MPS)
+    
+        push!(psi_evo, mps)
+      end
+      close(file_psi_evo)
+    end
+end
+
+
+
 psi_init=[]
 if continue_evo == 1
   global psi_init=psi_evo_end
-else
+elseif continue_evo == 0
   global psi_init=psi[band_evo]
+else
+
 end
 
 if time_evo_method == "TEBD"
@@ -452,14 +495,30 @@ if time_evo_method == "TEBD"
 
       #state = tdvp(H_time, -im*t_total, psi[band_evo]; time_step=-im*tau, cutoff, (step_observer!)=obs, outputlevel=0)
       state = tdvp( -im*Ht,t_total,psi_init;updater=krylov_updater,updater_kwargs=(; tol=converg, eager=true),time_step=tau,cutoff,nsite, (step_observer!)=obs,outputlevel=0)
-      Ene_H0 = obs.Ene0
-      #Ene_H_time = obs.Ene_time
-      p01=obs.p
-      S_site=(obs.sz,obs.sy,obs.sx)
-      DW_C=(obs.Cz,obs.Cy,obs.Cx)
-      if write_psi_evo == 1
-       psi_evo=obs.states
+      if continue_evo == 0
+        Ene_H0 = obs.Ene0
+        S_site=(obs.sz,obs.sy,obs.sx)
+        DW_C=(obs.Cz,obs.Cy,obs.Cx)
+        p01=obs.p
+        if write_psi_evo == 1
+          psi_evo=obs.states
+        end
+      elseif continue_evo == 1
+        Ene_H0=vcat(Ene_H0, obs.Ene0)
+        #Ene_H_time = obs.Ene_time
+        p01=vcat(p01,obs.p)
+        S_site=(vcat(S_site[1],obs.sz),vcat(S_site[2],obs.sy),vcat(S_site[3],obs.sx))
+        #push!(S_site,(obs.sz,obs.sy,obs.sx))
+        DW_C = (vcat(DW_C[1],obs.Cz),vcat(DW_C[2],obs.Cy),vcat(DW_C[3],obs.Cx))
+        #push!(DW_C,(obs.Cz,obs.Cy,obs.Cx))
+        if write_psi_evo == 1
+          psi_evo=vcat(psi_evo,obs.states)
+        end
       end
+
+
+
+
 
 else
 
@@ -479,10 +538,16 @@ if time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP"
 file_psi = h5open(string("psi_evo_end_",band_evo,".h5"),"w")
     write(file_psi,"psi",state)
     close(file_psi)
+    file_psi = h5open(string("psi_evo_start_",band_evo,".h5"),"w")
+    write(file_psi,"psi",psi_init)
+    close(file_psi)
 
 elseif time_evo_method == "TEBD"
   file_psi = h5open(string("psi_evo_end_",band_evo,".h5"),"w")
   write(file_psi,"psi",psi_temp)
+  close(file_psi)
+  file_psi = h5open(string("psi_evo_start_",band_evo,".h5"),"w")
+  write(file_psi,"psi",psi_init)
   close(file_psi)
 else
 
