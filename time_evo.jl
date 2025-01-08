@@ -91,6 +91,10 @@ if work_flow == "time_evo"
     tau = read_input(file_in,"tau_dis",Float64,0)
     t_total = read_input(file_in,"t_total",Float64,0)
     continue_evo = read_input(file_in,"continue_evo",Int,0)
+    if continue_evo == 1
+      t_end = read_input(file_in,"t_end",Float64,0) 
+    else
+    end
     band_evo = read_input(file_in,"band_evo",Int,0)
    else
 end
@@ -194,6 +198,10 @@ if work_flow == "time_evo"
     write(file_out, "\rtau_dis: $tau")
     write(file_out, "\rt_total: $t_total")
     write(file_out, "\rcontinue_evo: $continue_evo")
+    if continue_evo == 1
+      write(file_out, "\rt_end: $t_end")
+    else
+    end
     write(file_out, "\rband_evo: $band_evo")
    else
 end
@@ -444,10 +452,17 @@ if time_evo_method == "TEBD"
   elseif time_evo_method == "TDVP_Ht"
     write(file_out, "\r!!! Start TDVP Calculation with time dependent Hamiltonian !!!")
     write(file_out, "\r")
-
+    
+    if continue_evo == 1
+      t0=t_end
+    elseif continue_evo == 0
+      t0=0
+    else
+    end
+ 
     f0=map(ω -> (t -> 1), 0)
-    f1cos=map(ω -> (t -> cos(ω * t)), omega)
-    f1sin=map(ω -> (t -> sin(ω * t)), omega)
+    f1cos=map(ω -> (t -> cos(ω * (t+t0))), omega)
+    f1sin=map(ω -> (t -> sin(ω * (t+t0))), omega)
     
     f = (f0,f1cos,f1sin)
     H1cos=Ham_time_dependent_gates(N,sites,dhx,dhy)
