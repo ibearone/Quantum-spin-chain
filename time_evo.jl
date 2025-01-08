@@ -465,8 +465,9 @@ if time_evo_method == "TEBD"
     f1sin=map(ω -> (t -> sin(ω * (t+t0))), omega)
     
     f = (f0,f1cos,f1sin)
-    H1cos=Ham_time_dependent_gates(N,sites,dhx,dhy)
-    H = (H_time , H1cos);
+    H1cos=Ham_time_dependent_gates(N,sites,dhx,0)
+    H1sin=Ham_time_dependent_gates(N,sites,0,dhy)
+    H = (H_time , H1cos, H1sin);
     Ht=TimeDependentSum(f, H);
 
       step(; sweep) = sweep
