@@ -479,7 +479,7 @@ if time_evo_method == "TEBD"
         if Int(round(t_total/tau/100)) ==0
           push!(DATE,Dates.Time(Dates.now()))
           local rightnow=DATE[end]
-          println(file_out,"Time step: ", round(real(current_time*im),digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H_time, state)),digits=8),"   Date: ",rightnow)
+          println(file_out,"Time step: ", round(current_time,digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H_time, state)),digits=8),"   Date: ",rightnow)
           write(file_out, "\r")
           flush(file_out)
         else
