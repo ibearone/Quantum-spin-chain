@@ -207,6 +207,8 @@ if work_flow == "Start"
         os_Ham = OpSum()
         os_Ham += hz, "Sz", 1
         os_Ham += 2*hz, "Sz", 2  
+        os_Ham += J, "Sz", 1, "Sz", 1
+        os_Ham += J, "Sz", 2, "Sz", 2
         global H=MPO(os_Ham,sites)
     end
 
