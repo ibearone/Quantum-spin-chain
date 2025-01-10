@@ -115,7 +115,7 @@ DATE =[]
 if work_flow == "time_evo"
  file_out = open("Output_evo", "w")
  else
-  write(file_out, "\rWork flow is not assigned.")
+  write(file_out, "\rWork flow (time_evo) is not assigned.")
   push!(DATE,Dates.Time(Dates.now()))
   rightnow=DATE[end]
   write(file_out, "\rDate: $rightnow")
@@ -306,7 +306,7 @@ if continue_evo == 0
   p01=[]
 
   elseif continue_evo == 1
-    if time_evo_method == "TEBD" || time_evo_method == "TDVP"
+    if time_evo_method == "TEBD" || time_evo_method == "TDVP" || time_evo_method == "TDVP_Im_time"
       Ene_H0=load("time_evo_data.jld2","Ene_H0")
       Ene_H_time=load("time_evo_data.jld2","Ene_H_time")
       S_site=load("time_evo_data.jld2","S_site")
@@ -408,9 +408,15 @@ if time_evo_method == "TEBD"
     S_site=(S_temp_z,S_temp_y,S_temp_x)
     DW_C=(DW_temp_z,DW_temp_y,DW_temp_x)
 
- elseif time_evo_method == "TDVP"
-  write(file_out, "\r!!! Start TDVP Calculation !!!")
-  write(file_out, "\r")
+ elseif time_evo_method == "TDVP" || time_evo_method == "TDVP_Im_time"
+  if time_evo_method == "TDVP"
+    write(file_out, "\r!!! Start TDVP Calculation (real time) !!!")
+    write(file_out, "\r")
+  elseif time_evo_method == "TDVP_Im_time"
+    write(file_out, "\r!!! Start TDVP Calculation (imaginary time)!!!")
+    write(file_out, "\r")
+  else
+  end
     step(; sweep) = sweep
     current_time(; current_time) = current_time
     return_state(; state) = state
@@ -440,7 +446,12 @@ if time_evo_method == "TEBD"
        "sz" => measure_sz, "sy" => measure_sy, "sx" => measure_sx,
        "Cz" => measure_Cz, "Cy" => measure_Cy, "Cx" => measure_Cx,"timer" => timer
     )
-
+    if time_evo_method == "TDVP"
+      state = tdvp(-im*H_time, t_total, psi_init; time_step=tau, cutoff, (step_observer!)=obs, outputlevel=0)
+    elseif time_evo_method == "TDVP_Im_time"
+      state = tdvp(-H_time, t_total, psi_init; time_step=tau, cutoff, (step_observer!)=obs, outputlevel=0)
+    else
+    end
     state = tdvp(-im*H_time, t_total, psi_init; time_step=tau, cutoff, (step_observer!)=obs, outputlevel=0)
     Ene_H0 = obs.Ene0
     Ene_H_time = obs.Ene_time
@@ -449,6 +460,7 @@ if time_evo_method == "TEBD"
     if write_psi_evo == 1
      psi_evo=obs.states
     end
+    
   elseif time_evo_method == "TDVP_Ht"
     write(file_out, "\r!!! Start TDVP Calculation with time dependent Hamiltonian !!!")
     write(file_out, "\r")
@@ -550,7 +562,7 @@ flush(file_out)
 GC.gc()
 
 ###### Saving psi_evo Data #######
-if time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP"
+if time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP" || time_evo_method == "TDVP_Im_time"
 file_psi = h5open(string("psi_evo_end_",band_evo,".h5"),"w")
     write(file_psi,"psi",state)
     close(file_psi)
@@ -594,7 +606,7 @@ end
 
 if time_evo_method == "TEBD"
   jldsave("time_evo_data.jld2"; Ene_H0,Ene_H_time,S_site,DW_C)
- elseif time_evo_method == "TDVP"
+ elseif time_evo_method == "TDVP" || time_evo_method == "TDVP_Im_time"
   jldsave("time_evo_data.jld2"; Ene_H0,Ene_H_time,S_site,DW_C)
  elseif time_evo_method == "TDVP_Ht"
   jldsave("time_evo_data.jld2"; Ene_H0,S_site,DW_C,p01)
