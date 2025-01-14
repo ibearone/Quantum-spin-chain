@@ -69,8 +69,21 @@ function Ham_time_dependent_gates(N::Int,sites,dhx::Float64,dhy::Float64)
   for i = 1:N
     global os_Ham += dhy,"Sy",i
     global os_Ham += dhx,"Sx",i
+  end
+  global H=MPO(os_Ham,sites)
+  return H
 end
-global H=MPO(os_Ham,sites)
 
-return H
+function Ham_time_tot(N::Int,site,H_time::MPO,dhx::Float64,dhy::Float64,omega::Float64,t0::Float64)
+  f0=map(ω -> (t -> 1), 0)
+  f1cos=map(ω -> (t -> cos(ω * (t+t0))), omega)
+  f1sin=map(ω -> (t -> sin(ω * (t+t0))), omega)
+  
+  f = (f0,f1cos,f1sin)
+  H1cos=Ham_time_dependent_gates(N,sites,dhx,0.0)
+  H1sin=Ham_time_dependent_gates(N,sites,0.0,dhy)
+  H = (H_time , H1cos, H1sin)
+  Ht=TimeDependentSum(f, H)
+
+  return Ht
 end

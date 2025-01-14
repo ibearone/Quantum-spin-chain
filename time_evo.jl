@@ -159,18 +159,13 @@ if Lattice_type == 1 || Lattice_type ==5
     end
 end
 
-
-
 write(file_out, "\rInitial Condition: $Initial_Condition")
-
-
 write(file_out, "\rExchange Constant 'J': $J")
 write(file_out, "\rUniaxial Anisotropy 'Kz': $Kz")
 write(file_out, "\rIn-plane Anisotropy 'Ky': $Ky")
 write(file_out, "\rExternal Filed 'hx': $hx")
 write(file_out, "\rExternal Filed 'hy': $hy")
 write(file_out, "\rExternal Filed 'hz': $hz")
-
 write(file_out, "\r")
 
 write(file_out, "\r#### DMRG Parameters ####")
@@ -182,7 +177,6 @@ write(file_out, "\rcutoff: $cutoff")
 write(file_out, "\rconverg: $converg")
 write(file_out, "\rnoise: $noise")
 write(file_out, "\rmax_sweep: $max_sweep")
-
 write(file_out, "\rband_max: $band_max")
 write(file_out, "\rmaxdim: $maxdim")
 write(file_out, "\rmindim: $mindim")
@@ -216,7 +210,6 @@ end
 
 write(file_out, "\r")
 
-
 write(file_out, "\r#### Reading DMRG data ####")
 write(file_out, "\r")
 
@@ -230,8 +223,6 @@ for i=1:band_max
 end
 write(file_out, "\rRead psi_$band_max finished.")
 write(file_out, "\r")
-
-
 
 if continue_evo == 1
    file_psi_evo_end = h5open(string("psi_evo_end_",band_evo,".h5"),"r")
@@ -460,27 +451,32 @@ if time_evo_method == "TEBD"
     if write_psi_evo == 1
      psi_evo=obs.states
     end
-    
+
   elseif time_evo_method == "TDVP_Ht"
     write(file_out, "\r!!! Start TDVP Calculation with time dependent Hamiltonian !!!")
     write(file_out, "\r")
     
     if continue_evo == 1
       t0=t_end
+      write(file_out, "\r!!! Start time evolution from t0=$t_end !!!")
+      write(file_out, "\r")
     elseif continue_evo == 0
       t0=0
+      write(file_out, "\r!!! Start time evolution from t0=0 !!!")
+      write(file_out, "\r")
     else
     end
- 
-    f0=map(ω -> (t -> 1), 0)
-    f1cos=map(ω -> (t -> cos(ω * (t+t0))), omega)
-    f1sin=map(ω -> (t -> sin(ω * (t+t0))), omega)
     
-    f = (f0,f1cos,f1sin)
-    H1cos=Ham_time_dependent_gates(N,sites,dhx,0.0)
-    H1sin=Ham_time_dependent_gates(N,sites,0.0,dhy)
-    H = (H_time , H1cos, H1sin);
-    Ht=TimeDependentSum(f, H);
+    Ht=Ham_time_tot(N,site,H_time,dhx,dhy,omega,t0)
+    # f0=map(ω -> (t -> 1), 0)
+    # f1cos=map(ω -> (t -> cos(ω * (t+t0))), omega)
+    # f1sin=map(ω -> (t -> sin(ω * (t+t0))), omega)
+    
+    # f = (f0,f1cos,f1sin)
+    # H1cos=Ham_time_dependent_gates(N,sites,dhx,0.0)
+    # H1sin=Ham_time_dependent_gates(N,sites,0.0,dhy)
+    # H = (H_time , H1cos, H1sin);
+    # Ht=TimeDependentSum(f, H);
 
       step(; sweep) = sweep
       current_time(; current_time) = current_time
@@ -521,8 +517,9 @@ if time_evo_method == "TEBD"
          "Cz" => measure_Cz, "Cy" => measure_Cy, "Cx" => measure_Cx,"timer" => timer, "p" => measure_p
       )
 
-      #state = tdvp(H_time, -im*t_total, psi[band_evo]; time_step=-im*tau, cutoff, (step_observer!)=obs, outputlevel=0)
+
       state = tdvp( -im*Ht,t_total,psi_init;updater=krylov_updater,updater_kwargs=(; tol=converg, eager=true),time_step=tau,cutoff,nsite, (step_observer!)=obs,outputlevel=0)
+      
       if continue_evo == 0
         Ene_H0 = obs.Ene0
         S_site=(obs.sz,obs.sy,obs.sx)
