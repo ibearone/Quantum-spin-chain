@@ -461,7 +461,7 @@ if time_evo_method == "TEBD"
       write(file_out, "\r!!! Start time evolution from t0=$t_end !!!")
       write(file_out, "\r")
     elseif continue_evo == 0
-      t0=0
+      t0=0.0
       write(file_out, "\r!!! Start time evolution from t0=0 !!!")
       write(file_out, "\r")
     else
