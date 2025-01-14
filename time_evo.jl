@@ -270,7 +270,7 @@ elseif Lattice_type ==5
   global DWxMPO,DWyMPO,DWzMPO=DWC_operator_1D(N::Int,sites)
 else
   write(file_out, "\rHamiltonian not assigned.")
-  push!(DATE,Dates.Time(Dates.now()))
+  push!(DATE,Dates.DateTime(Dates.now()))
   rightnow=DATE[end]
   write(file_out, "\rDate: $rightnow")
   write(file_out, "\r")
@@ -386,7 +386,7 @@ if time_evo_method == "TEBD"
       end
 
         if (i-1) % Int(t_total/tau/100) == 0 && i != 0
-          push!(DATE,Dates.Time(Dates.now()))
+          push!(DATE,Dates.DateTime(Dates.now()))
           local rightnow=DATE[end]
           local E0_print=round(Ene_H0[i],digits=8)
           local Et_print=round(Ene_H_time[i],digits=8)
@@ -416,7 +416,7 @@ if time_evo_method == "TEBD"
 
     timer(; sweep, current_time, state) = begin
       if sweep % Int(t_total/tau/100) == 0 && sweep != 0
-        push!(DATE,Dates.Time(Dates.now()))
+        push!(DATE,Dates.DateTime(Dates.now()))
         local rightnow=DATE[end]
         println(file_out,"Time step: ", round(current_time,digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H, state)),digits=8),"   Ene_time = ", round(real(inner(state', H_time, state)),digits=8),"   Date: ",rightnow)
         write(file_out, "\r")
@@ -486,14 +486,14 @@ if time_evo_method == "TEBD"
   
       timer(; sweep, current_time, state) = begin
         if Int(round(t_total/tau/100)) ==0
-          push!(DATE,Dates.Time(Dates.now()))
+          push!(DATE,Dates.DateTime(Dates.now()))
           local rightnow=DATE[end]
           println(file_out,"Time step: ", round(current_time,digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H_time, state)),digits=8),"   Date: ",rightnow)
           write(file_out, "\r")
           flush(file_out)
         else
           if sweep % Int(round(t_total/tau/100)) == 0 && sweep != 0
-            push!(DATE,Dates.Time(Dates.now()))
+            push!(DATE,Dates.DateTime(Dates.now()))
             local rightnow=DATE[end]
             println(file_out,"Time step: ", round(current_time,digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H_time, state)),digits=8),"   Date: ",rightnow)
             write(file_out, "\r")
@@ -550,7 +550,7 @@ else
 end
 
 write(file_out, "\rTime step: $t_total/$t_total")
-push!(DATE,Dates.Time(Dates.now()))
+push!(DATE,Dates.DateTime(Dates.now()))
 rightnow=DATE[end]
 write(file_out, "\rDate: $rightnow")
 write(file_out, "\r")
@@ -611,7 +611,7 @@ if time_evo_method == "TEBD"
 
 ####### timer  ##################
 write(file_out, "\rSimulation Finished.")
-push!(DATE,Dates.Time(Dates.now()))
+push!(DATE,Dates.DateTime(Dates.now()))
 rightnow=DATE[end]
 runtime=round(Dates.value(DATE[end]-DATE[1])/1E9/60;digits = 2)
 write(file_out, "\rDate: $rightnow")
