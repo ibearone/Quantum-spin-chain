@@ -467,7 +467,7 @@ if time_evo_method == "TEBD"
     else
     end
     
-    Ht=Ham_time_tot(N,site,H_time,dhx,dhy,omega,t0)
+    Ht=Ham_time_tot(N,sites,H_time,dhx,dhy,omega,t0)
     # f0=map(ω -> (t -> 1), 0)
     # f1cos=map(ω -> (t -> cos(ω * (t+t0))), omega)
     # f1sin=map(ω -> (t -> sin(ω * (t+t0))), omega)
