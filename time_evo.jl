@@ -275,8 +275,8 @@ elseif Lattice_type ==5
     for j in 1:N
         s_i = sites[j]
         hj_inner =
-        dhy*sin(ω * t)*op("Sy", s_i) +
-        dhx*cos(ω * t)*op("Sx", s_i) +
+        hy*op("Sy", s_i) +
+        hx*op("Sx", s_i) +
         hz*j*op("Sz", s_i) 
         Gj = exp(-im * tau/2 * hj_inner)
         push!(evo_gates, Gj)
