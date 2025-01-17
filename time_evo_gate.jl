@@ -8,8 +8,8 @@
 # evolution Hanmiltonian.                   #
 ############################################# 
 
-############### Define H_evo and evo_gates for TEBD simulation ##############################
-function Ham_gates_TEBD_LT_1(N::Int,sites,NBC1::Int,NBC2::Int,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64)
+############### Define evo_gates for TEBD simulation ##############################
+function evo_gates_TEBD_LT_1(N::Int,sites,NBC1::Int,NBC2::Int,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64)
  Jx = -J
  Jy = -J + Ky
  Jz = -J - Kz
@@ -48,24 +48,72 @@ function Ham_gates_TEBD_LT_1(N::Int,sites,NBC1::Int,NBC2::Int,J::Float64,Kz::Flo
   end
   append!(evo_gates, reverse(evo_gates));
 
-  ##### Hamiltonian ######
-  global os_Ham= OpSum()
-  for i =1:N-1
-      global os_Ham += Jz,"Sz",i,"Sz",i+1
-      global os_Ham += Jy,"Sy",i,"Sy",i+1
-      global os_Ham += Jx,"Sx",i,"Sx",i+1
-  end
-  for i = 1:N
-      global os_Ham += hy,"Sy",i
-      global os_Ham += hx,"Sx",i
-      global os_Ham += hzsites[i],"Sz",i
-  end
-  global H_evo=MPO(os_Ham,sites)
 
- return H_evo,evo_gates
+ return evo_gates
+end
+
+function evo_gates_TEBD_LT_1_Ht(N::Int,sites,NBC1::Int,NBC2::Int,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64,dhx::Float64,dhy::Float64,omega::Float64,t::Float64)
+  Jx = -J
+  Jy = -J + Ky
+  Jz = -J - Kz
+  hzsites = [0 for n=1:N]
+  hzsites[1:NBC1].=hz
+  hzsites[NBC2:N].=-hz
+ 
+  global evo_gates = ITensor[]
+   for j in 1:(N - 1)
+     s1 = sites[j]
+     s2 = sites[j + 1]
+     hj_inner =
+     (hy+dhy*sin(omega * t))*op("Sy", s1) +
+     (hx+dhx*cos(omega * t))*op("Sx", s1) +
+     hzsites[j]*op("Sz", s1) 
+     Gj = exp(-im * tau/2 * hj_inner)
+     push!(evo_gates, Gj)
+     
+     hj_inter =
+       Jz*op("Sz", s1) * op("Sz", s2) +
+       Jy*op("Sy", s1) * op("Sy", s2) +
+       Jx*op("Sx", s1) * op("Sx", s2) 
+ 
+     Gj = exp(-im * tau/2 * hj_inter)
+     push!(evo_gates, Gj)
+ 
+   end
+   for j = N
+     s1 = sites[j]
+     hj_inner =
+     (hy+dhy*cos(omega * t))*op("Sy", s1) +
+     (hx+dhx*sin(omega * t))*op("Sx", s1) +
+       hzsites[j]*op("Sz", s1) 
+     Gj = exp(-im * tau/2 * hj_inner)
+     push!(gates, Gj)
+   end
+   append!(evo_gates, reverse(evo_gates));
+ 
+ 
+  return evo_gates
 end
 
 
+
+function evo_gates_TEBD_LT_5_Ht(N::Int,sites,hx::Float64,hy::Float64,hz::Float64,dhx::Float64,dhy::Float64,omega::Float64,t::Float64)
+
+  global evo_gates = ITensor[]
+  for j in 1:N
+    s_i = sites[j]
+    hj_inner =
+    (hy+dhy*sin(omega * t))*op("Sy", s_i) +
+    (hx+dhx*cos(omega * t))*op("Sx", s_i) +
+    hz*j*op("Sz", s_i) 
+    Gj = exp(-im * tau/2 * hj_inner)
+    push!(evo_gates, Gj)
+    
+    
+  end
+  append!(evo_gates, reverse(evo_gates))
+  return evo_gates
+ end
 
 ############### Define time dependent part of Hamiltonian in TDVP simulation ##############################
 function Ham_time_dependent_TDVP(N::Int,sites,dhx::Float64,dhy::Float64)

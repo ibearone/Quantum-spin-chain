@@ -101,7 +101,7 @@ if work_flow == "time_evo"
    else
 end
 
-if time_evo_method == "TDVP_Ht"
+if time_evo_method == "TDVP_Ht" || time_evo_method == "TEBD_Ht"
   dhx = read_input(file_in,"dhx",Float64,0)
   dhy = read_input(file_in,"dhy",Float64,0)
   omega = read_input(file_in,"omega",Float64,0)
@@ -115,15 +115,17 @@ close(file_in)
 DATE =[]
 ########## Writing Oututs ############
 if work_flow == "time_evo"
- file_out = open("Output_evo", "w")
- else
-  write(file_out, "\rWork flow (time_evo) is not assigned.")
-  push!(DATE,Dates.Time(Dates.now()))
-  rightnow=DATE[end]
-  write(file_out, "\rDate: $rightnow")
-  write(file_out, "\r")
-  exit()
-end
+  file_out = open("Output_evo", "w")
+
+  else
+    file_out = open("Output_evo", "w")
+   write(file_out, "\rWork flow (time_evo) is not assigned.")
+   push!(DATE,Dates.DateTime(Dates.now()))
+   rightnow=DATE[end]
+   write(file_out, "\rDate: $rightnow")
+   write(file_out, "\r")
+   exit()
+ end
 
 write(file_out, "###############################################")
 write(file_out, "\rOutput file of Quantum Spin Chain simulation (time evolution)")
@@ -202,7 +204,7 @@ if work_flow == "time_evo"
    else
 end
 
-if time_evo_method == "TDVP_Ht"
+if time_evo_method == "TDVP_Ht" || time_evo_method == "TEBD_Ht"
   write(file_out, "\rdhx: $dhx")
   write(file_out, "\rdhy: $dhy")
   write(file_out, "\romega: $omega")
@@ -210,6 +212,10 @@ if time_evo_method == "TDVP_Ht"
   write(file_out, "\rband_tar: $band_tar")
 end
 
+write(file_out, "\r")
+push!(DATE,Dates.DateTime(Dates.now()))
+rightnow=DATE[end]
+write(file_out, "\rDate: $rightnow")
 write(file_out, "\r")
 
 write(file_out, "\r#### Reading DMRG data ####")
@@ -259,35 +265,18 @@ flush(file_out)
 ####### define time evolution operator #######
 if Lattice_type == 1 
   if Mobile_DW == 1
-    global H_evo, evo_gates=Ham_gates_TEBD_LT_1(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
-
+    global H_evo = Heisenberg_Ham_mobile_DW(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
   else
     NBC=[1,N]
-    global H_evo, evo_gates=Ham_gates_TEBD_LT_1(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
+    global H_evo = Heisenberg_Ham_mobile_DW(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
   end
-  global DWxMPO,DWyMPO,DWzMPO=DWC_operator_1D(N::Int,sites)
+  global DWxMPO,DWyMPO,DWzMPO=DWC_operator_1D(N,sites)
 
 elseif Lattice_type ==5
 
   global H_evo=H
 
-  global evo_gates = ITensor[]
-    for j in 1:N
-        s_i = sites[j]
-        hj_inner =
-        hy*op("Sy", s_i) +
-        hx*op("Sx", s_i) +
-        hz*j*op("Sz", s_i) 
-        Gj = exp(-im * tau/2 * hj_inner)
-        push!(evo_gates, Gj)
-        
-
-    end
-
-    append!(evo_gates, reverse(evo_gates));
-
-
-  global DWxMPO,DWyMPO,DWzMPO=DWC_operator_1D(N::Int,sites)
+  global DWxMPO,DWyMPO,DWzMPO=DWC_operator_1D(N,sites)
 else
   write(file_out, "\rHamiltonian not assigned. (Lattice_type is limited to 1 or 5.)")
   push!(DATE,Dates.DateTime(Dates.now()))
@@ -356,23 +345,36 @@ end
 
 
 
-if time_evo_method == "TEBD" || time_evo_method == "TEBD_Ht"
+if time_evo_method == "TEBD" 
     obs_Ene0 = []
-    obs_Ene_H_evo = []
+    obs_Ene_evo = []
     obs_sz = []
     obs_sy = []
     obs_sx = []
     obs_Cz = []
     obs_Cy = []
     obs_Cx = []
+    if Lattice_type == 1 
+      if Mobile_DW == 1
+        global evo_gates = evo_gates_TEBD_LT_1(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
+      else
+        NBC=[1,N]
+        global evo_gates = evo_gates_TEBD_LT_1(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
+      end
+    elseif Lattice_type == 5
+      global evo_gates = evo_gates_TEBD_LT_5(N,sites,hx,hy,hz)
+    else
+    end
+ 
+
 
     global psi_temp = apply(evo_gates, psi_init; cutoff)
       
-    for (i, t) in enumerate(0.0:tau:t_total)
+    for (i, t) in enumerate(tau:tau:t_total)
 
 
       push!( obs_Ene0,real(inner(psi_temp', H,psi_temp)))
-      push!( obs_Ene_H_evo,real(inner(psi_temp', H_evo, psi_temp)))
+      push!( obs_Ene_evo,real(inner(psi_temp', H_evo, psi_temp)))
       push!( obs_sz,expect(psi_temp, "Sz"))
       push!( obs_sy,expect(psi_temp, "Sy"))
       push!( obs_sx,expect(psi_temp, "Sx"))
@@ -392,7 +394,7 @@ if time_evo_method == "TEBD" || time_evo_method == "TEBD_Ht"
           push!(DATE,Dates.DateTime(Dates.now()))
           local rightnow=DATE[end]
           local E0_print=round(obs_Ene0[i],digits=8)
-          local Et_print=round( obs_Ene_H_evo[i],digits=8)
+          local Et_print=round( obs_Ene_evo[i],digits=8)
           write(file_out, "\rTime step: $t/$t_total   Ene0 = $E0_print   Ene0 = $Et_print  Date: $rightnow")
           write(file_out, "\r")
           flush(file_out)
@@ -402,16 +404,106 @@ if time_evo_method == "TEBD" || time_evo_method == "TEBD_Ht"
 
     if continue_evo == 0
       Ene_H0 =  obs_Ene0
-      Ene_H_evo = obs_Ene_H_evo
+      Ene_H_evo = obs_Ene_evo
       S_site=( obs_sz, obs_sy, obs_sx)
       DW_C=( obs_Cz, obs_Cy, obs_Cx)
 
-      if write_psi_evo == 1
-        psi_evo=obs.states
-      end
+
     elseif continue_evo == 1
       Ene_H0=vcat(Ene_H0, obs_Ene0)
-      p01=vcat(p01,obs.p)
+      Ene_H_evo=vcat(Ene_H_evo, obs_Ene_evo)
+      S_site=(vcat(S_site[1],obs_sz),vcat(S_site[2], obs_sy),vcat(S_site[3], obs_sx))
+      DW_C = (vcat(DW_C[1], obs_Cz),vcat(DW_C[2], obs_Cy),vcat(DW_C[3], obs_Cx))
+
+    end
+elseif time_evo_method == "TEBD_Ht" 
+    obs_Ene0 = []
+    obs_p = []
+    obs_sz = []
+    obs_sy = []
+    obs_sx = []
+    obs_Cz = []
+    obs_Cy = []
+    obs_Cx = []
+    if continue_evo == 1
+      t0=t_end
+      write(file_out, "\r!!! Start time evolution from t0=$t_end !!!")
+      write(file_out, "\r")
+    elseif continue_evo == 0
+      t0=0.0
+      write(file_out, "\r!!! Start time evolution from t0=0 !!!")
+      write(file_out, "\r")
+    else
+    end
+
+    if Lattice_type == 1 
+      if Mobile_DW == 1
+        global evo_gates = evo_gates_TEBD_LT_1_Ht(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz,dhx,dhy,omega,t0)
+      else
+        global NBC=[1,N]
+        global evo_gates = evo_gates_TEBD_LT_1_Ht(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz,dhx,dhy,omega,t0)
+      end
+    elseif Lattice_type == 5
+     
+      global evo_gates =evo_gates_TEBD_LT_5_Ht(N,sites,hx,hy,hz,dhx,dhy,omega,t0)
+    else
+    end
+
+    global psi_temp = apply(evo_gates, psi_init; cutoff)
+      
+    for (i, t) in enumerate(tau:tau:t_total)
+
+      if Lattice_type == 1 
+        if Mobile_DW == 1
+          global evo_gates = evo_gates_TEBD_LT_1_Ht(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz,dhx,dhy,omega,t0+t)
+        else
+          NBC=[1,N]
+          global evo_gates = evo_gates_TEBD_LT_1_Ht(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz,dhx,dhy,omega,t0+t)
+        end
+      elseif Lattice_type == 5
+
+        global evo_gates =evo_gates_TEBD_LT_5_Ht(N,sites,hx,hy,hz,dhx,dhy,omega,t0+t)
+      else
+      end
+      push!( obs_Ene0,real(inner(psi_temp', H,psi_temp)))
+      push!( obs_p,abs(inner(psi_temp,psi[band_tar]))^2)
+      push!( obs_sz,expect(psi_temp, "Sz"))
+      push!( obs_sy,expect(psi_temp, "Sy"))
+      push!( obs_sx,expect(psi_temp, "Sx"))
+      push!( obs_Cz,inner(psi_temp',DWzMPO,psi_temp))
+      push!( obs_Cy,inner(psi_temp',DWyMPO,psi_temp))
+      push!( obs_Cx,inner(psi_temp',DWxMPO,psi_temp))
+      if write_psi_evo == 1
+      global psi_evo=vcat(psi_evo, psi_temp)
+      end
+      
+      t≈t_total && break
+        
+      global psi_temp = apply(evo_gates, psi_temp; cutoff)
+      normalize!(psi_temp)
+
+        if (i-1) % Int(t_total/tau/100) == 0 && i != 0
+          push!(DATE,Dates.DateTime(Dates.now()))
+          local rightnow=DATE[end]
+          local E0_print=round(obs_Ene0[i],digits=8)
+  
+          write(file_out, "\rTime step: $t/$t_total   Ene0 = $E0_print   Date: $rightnow")
+          write(file_out, "\r")
+          flush(file_out)
+          GC.gc()
+      end
+    end
+
+    if continue_evo == 0
+      Ene_H0 =  obs_Ene0
+      p01 = obs_p
+      S_site=( obs_sz, obs_sy, obs_sx)
+      DW_C=( obs_Cz, obs_Cy, obs_Cx)
+
+
+    elseif continue_evo == 1
+      Ene_H0=vcat(Ene_H0, obs_Ene0)
+      p01=vcat(Ene_H_evo, obs_p)
       S_site=(vcat(S_site[1],obs_sz),vcat(S_site[2], obs_sy),vcat(S_site[3], obs_sx))
       DW_C = (vcat(DW_C[1], obs_Cz),vcat(DW_C[2], obs_Cy),vcat(DW_C[3], obs_Cx))
 
@@ -600,7 +692,7 @@ if time_evo_method == "TEBD"
   jldsave("time_evo_data.jld2"; Ene_H0,Ene_H_evo,S_site,DW_C)
  elseif time_evo_method == "TDVP" || time_evo_method == "TDVP_Im_time"
   jldsave("time_evo_data.jld2"; Ene_H0,Ene_H_evo,S_site,DW_C)
- elseif time_evo_method == "TDVP_Ht"
+ elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TEBD_Ht"
   jldsave("time_evo_data.jld2"; Ene_H0,S_site,DW_C,p01)
  end
 

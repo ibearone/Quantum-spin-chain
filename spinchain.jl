@@ -172,7 +172,7 @@ write(file_out, "\r")
 
 write(file_out, "\rReading Inputs finished.")
 DATE=[]
-push!(DATE,Dates.Time(Dates.now()))
+push!(DATE,Dates.DateTime(Dates.now()))
 rightnow=DATE[end]
 write(file_out, "\rDate: $rightnow")
 
@@ -214,7 +214,7 @@ if work_flow == "Start"
 
     ####### timer  ##################
     write(file_out, "\rConstructing Hamiltonian finished.")
-    push!(DATE,Dates.Time(Dates.now()))
+    push!(DATE,Dates.DateTime(Dates.now()))
     rightnow=DATE[end]
     write(file_out, "\rDate: $rightnow")
     write(file_out, "\r")
@@ -241,13 +241,13 @@ elseif work_flow == "Continue"
     #D_E=load("data.jld2","D_E")
     sites = siteinds(psi[1])
     write(file_out, "\rContinue calculation from State $band_min.")
-    push!(DATE,Dates.Time(Dates.now()))
+    push!(DATE,Dates.DateTime(Dates.now()))
     rightnow=DATE[end]
     write(file_out, "\rDate: $rightnow")
     write(file_out, "\r")
 else
     write(file_out, "\rWork flow is not assigned.")
-    push!(DATE,Dates.Time(Dates.now()))
+    push!(DATE,Dates.DateTime(Dates.now()))
     rightnow=DATE[end]
     write(file_out, "\rDate: $rightnow")
     write(file_out, "\r")
@@ -347,7 +347,7 @@ if work_flow == "Start"
     write(file_out, "\r")
     if sweep_num_loop[end] >= max_sweep
         write(file_out, "\rDmrg loops of state 1 exceeds maxmium = $max_sweep")
-        push!(DATE,Dates.Time(Dates.now()))
+        push!(DATE,Dates.DateTime(Dates.now()))
         close(file_out)
         exit()
     else
@@ -407,7 +407,7 @@ if work_flow == "Start"
         jldsave("DMRG_data.jld2"; energy,E,sweep_num)
 
         ####### timer  ##################
-        push!(DATE,Dates.Time(Dates.now()))
+        push!(DATE,Dates.DateTime(Dates.now()))
         local rightnow=DATE[end]
         write(file_out, "\rDate: $rightnow")
         write(file_out, "\r")
@@ -471,7 +471,7 @@ elseif work_flow == "Continue"
         jldsave("DMRG_data.jld2"; energy,E,sweep_num)
 
         ####### timer  ##################
-        push!(DATE,Dates.Time(Dates.now()))
+        push!(DATE,Dates.DateTime(Dates.now()))
         local rightnow=DATE[end]
         write(file_out, "\rDate: $rightnow")
         write(file_out, "\r")
@@ -649,7 +649,7 @@ close(file_ene)
 write(file_out, "\rSimulation Finished.")
 push!(DATE,Dates.Time(Dates.now()))
 rightnow=DATE[end]
-runtime=round(Dates.value(DATE[end]-DATE[1])/1E9/60;digits = 2)
+runtime=round(Dates.value(DATE[end]-DATE[1])/1E3/60;digits = 2)
 write(file_out, "\rDate: $rightnow")
 write(file_out, "\rtotal runtime: $runtime mins")
 write(file_out, "\r###############################################")
