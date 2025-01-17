@@ -266,9 +266,26 @@ if Lattice_type == 1
     global H_evo, evo_gates=Ham_gates_TEBD_LT_1(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
   end
   global DWxMPO,DWyMPO,DWzMPO=DWC_operator_1D(N::Int,sites)
+
 elseif Lattice_type ==5
 
   global H_evo=H
+
+  global evo_gates = ITensor[]
+    for j in 1:N
+        s_i = sites[j]
+        hj_inner =
+        dhy*sin(ω * t)*op("Sy", s_i) +
+        dhx*cos(ω * t)*op("Sx", s_i) +
+        hz*j*op("Sz", s_i) 
+        Gj = exp(-im * tau/2 * hj_inner)
+        push!(evo_gates, Gj)
+        
+
+    end
+
+    append!(evo_gates, reverse(evo_gates));
+
 
   global DWxMPO,DWyMPO,DWzMPO=DWC_operator_1D(N::Int,sites)
 else
