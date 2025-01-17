@@ -613,7 +613,7 @@ if time_evo_method == "TEBD"
 write(file_out, "\rSimulation Finished.")
 push!(DATE,Dates.DateTime(Dates.now()))
 rightnow=DATE[end]
-runtime=round(Dates.value(DATE[end]-DATE[1])/1E9/60;digits = 2)
+runtime=round(Dates.value(DATE[end]-DATE[1])/1E3/60;digits = 2)
 write(file_out, "\rDate: $rightnow")
 write(file_out, "\rtotal runtime: $runtime mins")
 write(file_out, "\r###############################################")
