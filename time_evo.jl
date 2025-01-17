@@ -230,7 +230,6 @@ if continue_evo == 1
    file_psi_evo_end = h5open(string("psi_evo_end_",band_evo,".h5"),"r")
   global psi_evo_end=read(file_psi_evo_end,"psi",MPS)
   close(file_psi_evo_end)
-  #push!(psi_evo,psi_temp)
   write(file_out, "\rRead psi_evo_end_$band_max finished.")
   write(file_out, "\r")
 else
@@ -268,7 +267,9 @@ if Lattice_type == 1
   end
   global DWxMPO,DWyMPO,DWzMPO=DWC_operator_1D(N::Int,sites)
 elseif Lattice_type ==5
+
   global H_evo=H
+
   global DWxMPO,DWyMPO,DWzMPO=DWC_operator_1D(N::Int,sites)
 else
   write(file_out, "\rHamiltonian not assigned. (Lattice_type is limited to 1 or 5.)")
@@ -338,7 +339,7 @@ end
 
 
 
-if time_evo_method == "TEBD"
+if time_evo_method == "TEBD" || time_evo_method == "TEBD_Ht"
     obs_Ene0 = []
     obs_Ene_H_time = []
     obs_sz = []
@@ -553,20 +554,6 @@ file_psi = h5open(string("psi_evo_end_",band_evo,".h5"),"w")
   file_psi = h5open(string("psi_evo_start_",band_evo,".h5"),"w")
   write(file_psi,"psi",psi_init)
   close(file_psi)
-
-# if time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP" || time_evo_method == "TDVP_Im_time"
-
-
-# elseif time_evo_method == "TEBD"
-#   file_psi = h5open(string("psi_evo_end_",band_evo,".h5"),"w")
-#   write(file_psi,"psi",psi_temp)
-#   close(file_psi)
-#   file_psi = h5open(string("psi_evo_start_",band_evo,".h5"),"w")
-#   write(file_psi,"psi",psi_init)
-#   close(file_psi)
-# else
-
-# end
 
 if write_psi_evo == 1
  file_psi = h5open(string("psi_evo_", band_evo, ".h5"), "w")
