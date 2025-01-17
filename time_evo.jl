@@ -548,7 +548,7 @@ GC.gc()
 
 ###### Saving psi_evo Data #######
 file_psi = h5open(string("psi_evo_end_",band_evo,".h5"),"w")
-  write(file_psi,"psi", psi_end)
+  write(file_psi,"psi", psi_temp)
   close(file_psi)
   file_psi = h5open(string("psi_evo_start_",band_evo,".h5"),"w")
   write(file_psi,"psi",psi_init)
