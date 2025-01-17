@@ -372,7 +372,7 @@ if time_evo_method == "TEBD" || time_evo_method == "TEBD_Ht"
 
 
       push!( obs_Ene0,real(inner(psi_temp', H,psi_temp)))
-      push!( obs_Ene_H_time,real(inner(psi_temp', H_evo, psi_temp)))
+      push!( obs_Ene_H_evo,real(inner(psi_temp', H_evo, psi_temp)))
       push!( obs_sz,expect(psi_temp, "Sz"))
       push!( obs_sy,expect(psi_temp, "Sy"))
       push!( obs_sx,expect(psi_temp, "Sx"))
@@ -391,8 +391,8 @@ if time_evo_method == "TEBD" || time_evo_method == "TEBD_Ht"
         if (i-1) % Int(t_total/tau/100) == 0 && i != 0
           push!(DATE,Dates.DateTime(Dates.now()))
           local rightnow=DATE[end]
-          local E0_print=round(Ene_H0[i],digits=8)
-          local Et_print=round(Ene_H_evo[i],digits=8)
+          local E0_print=round(obs_Ene0[i],digits=8)
+          local Et_print=round( obs_Ene_H_evo[i],digits=8)
           write(file_out, "\rTime step: $t/$t_total   Ene0 = $E0_print   Ene0 = $Et_print  Date: $rightnow")
           write(file_out, "\r")
           flush(file_out)
@@ -402,6 +402,7 @@ if time_evo_method == "TEBD" || time_evo_method == "TEBD_Ht"
 
     if continue_evo == 0
       Ene_H0 =  obs_Ene0
+      Ene_H_evo = obs_Ene_H_evo
       S_site=( obs_sz, obs_sy, obs_sx)
       DW_C=( obs_Cz, obs_Cy, obs_Cx)
 
