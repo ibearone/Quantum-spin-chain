@@ -362,7 +362,7 @@ if time_evo_method == "TEBD"
       push!( obs_Cy,inner(psi_temp',DWyMPO,psi_temp))
       push!( obs_Cx,inner(psi_temp',DWxMPO,psi_temp))
       if write_psi_evo == 1
-        psi_evo=vcat(psi_evo, psi_temp)
+      global psi_evo=vcat(psi_evo, psi_temp)
       end
       
       t≈t_total && break
