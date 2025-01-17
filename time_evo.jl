@@ -358,7 +358,7 @@ end
 
 if time_evo_method == "TEBD" || time_evo_method == "TEBD_Ht"
     obs_Ene0 = []
-    obs_Ene_H_time = []
+    obs_Ene_H_evo = []
     obs_sz = []
     obs_sy = []
     obs_sx = []
