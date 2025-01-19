@@ -33,6 +33,57 @@ function Heisenberg_Ham(N::Int,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy
 return H,sites
 end
 
+########## Spin Hamiltonian mobile ############
+function Heisenberg_Ham_mobile(N::Int,NBC1::Int,NBC2::Int,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64)
+    sites = siteinds("S=1/2",N)
+    Jx = -J
+    Jy = -J + Ky
+    Jz = -J - Kz
+    hzsites = [0 for n=1:N]
+    hzsites[1:NBC1].=hz
+    hzsites[NBC2:N].=-hz
+    ##### Hamiltonian ######
+    global os_Ham= OpSum()
+    for i =1:N-1
+        global os_Ham += Jz,"Sz",i,"Sz",i+1
+        global os_Ham += Jy,"Sy",i,"Sy",i+1
+        global os_Ham += Jx,"Sx",i,"Sx",i+1
+    end
+    for i = 1:N
+        global os_Ham += hy,"Sy",i
+        global os_Ham += hx,"Sx",i
+        global os_Ham += hzsites[i],"Sz",i
+    end
+    global H=MPO(os_Ham,sites)
+return H,sites
+end
+
+########## Spin Hamiltonian mobile (recalculation) ############
+function Heisenberg_Ham_mobile_2(sites,NBC1::Int,NBC2::Int,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64)
+    N = length(sites)
+    Jx = -J
+    Jy = -J + Ky
+    Jz = -J - Kz
+    hzsites = [0 for n=1:N]
+    hzsites[1:NBC1].=hz
+    hzsites[NBC2:N].=-hz
+    ##### Hamiltonian ######
+    global os_Ham= OpSum()
+    for i =1:N-1
+        global os_Ham += Jz,"Sz",i,"Sz",i+1
+        global os_Ham += Jy,"Sy",i,"Sy",i+1
+        global os_Ham += Jx,"Sx",i,"Sx",i+1
+    end
+    for i = 1:N
+        global os_Ham += hy,"Sy",i
+        global os_Ham += hx,"Sx",i
+        global os_Ham += hzsites[i],"Sz",i
+    end
+    global H=MPO(os_Ham,sites)
+return H
+end
+
+
 ########## Spin Hamiltonian  ############
 function Heisenberg_Ham2D(Nx::Int,Ny::Int,J_inter::Float64,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64,BC)
     N = Nx * Ny
@@ -122,52 +173,5 @@ function interleave_arrays(arr1, arr2)
 end
 
 
-########## Spin Hamiltonian mobile ############
-function Heisenberg_Ham_mobile(N::Int,NBC1::Int,NBC2::Int,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64)
-    sites = siteinds("S=1/2",N)
-    Jx = -J
-    Jy = -J + Ky
-    Jz = -J - Kz
-    hzsites = [0 for n=1:N]
-    hzsites[1:NBC1].=hz
-    hzsites[NBC2:N].=-hz
-    ##### Hamiltonian ######
-    global os_Ham= OpSum()
-    for i =1:N-1
-        global os_Ham += Jz,"Sz",i,"Sz",i+1
-        global os_Ham += Jy,"Sy",i,"Sy",i+1
-        global os_Ham += Jx,"Sx",i,"Sx",i+1
-    end
-    for i = 1:N
-        global os_Ham += hy,"Sy",i
-        global os_Ham += hx,"Sx",i
-        global os_Ham += hzsites[i],"Sz",i
-    end
-    global H=MPO(os_Ham,sites)
-return H,sites
-end
 
-########## Spin Hamiltonian mobile ############
-function Heisenberg_Ham_mobile_2(N::Int,sites,NBC1::Int,NBC2::Int,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64)
-    
-    Jx = -J
-    Jy = -J + Ky
-    Jz = -J - Kz
-    hzsites = [0 for n=1:N]
-    hzsites[1:NBC1].=hz
-    hzsites[NBC2:N].=-hz
-    ##### Hamiltonian ######
-    global os_Ham= OpSum()
-    for i =1:N-1
-        global os_Ham += Jz,"Sz",i,"Sz",i+1
-        global os_Ham += Jy,"Sy",i,"Sy",i+1
-        global os_Ham += Jx,"Sx",i,"Sx",i+1
-    end
-    for i = 1:N
-        global os_Ham += hy,"Sy",i
-        global os_Ham += hx,"Sx",i
-        global os_Ham += hzsites[i],"Sz",i
-    end
-    global H=MPO(os_Ham,sites)
-return H
-end
+
