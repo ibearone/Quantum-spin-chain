@@ -265,10 +265,10 @@ flush(file_out)
 ####### define time evolution operator #######
 if Lattice_type == 1 
   if Mobile_DW == 1
-    global H_evo = Heisenberg_Ham_mobile(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
+    global H_evo,sites = Heisenberg_Ham_mobile_2(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
   else
     NBC=[1,N]
-    global H_evo = Heisenberg_Ham_mobile(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
+    global H_evo,sites = Heisenberg_Ham_mobile_2(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
   end
   global DWxMPO,DWyMPO,DWzMPO=DWC_operator_1D(N,sites)
 
