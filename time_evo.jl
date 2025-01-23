@@ -465,14 +465,14 @@ elseif time_evo_method == "TEBD_Ht"
 
       if Lattice_type == 1 
         if Mobile_DW == 1
-          global evo_gates = evo_gates_TEBD_LT_1_Ht(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz,dhx,dhy,omega,t0+t)
+          global evo_gates = evo_gates_TEBD_LT_1_Ht(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz,dhx,dhy,omega,t0+t,tau)
         else
           NBC=[1,N]
-          global evo_gates = evo_gates_TEBD_LT_1_Ht(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz,dhx,dhy,omega,t0+t)
+          global evo_gates = evo_gates_TEBD_LT_1_Ht(N,sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz,dhx,dhy,omega,t0+t,tau)
         end
       elseif Lattice_type == 5
 
-        global evo_gates =evo_gates_TEBD_LT_5_Ht(N,sites,hx,hy,hz,dhx,dhy,omega,t0+t)
+        global evo_gates =evo_gates_TEBD_LT_5_Ht(N,sites,hx,hy,hz,dhx,dhy,omega,t0+t,tau)
       else
       end
       push!( obs_Ene0,real(inner(psi_temp', H,psi_temp)))

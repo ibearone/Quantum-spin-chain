@@ -52,7 +52,7 @@ function evo_gates_TEBD_LT_1(N::Int,sites,NBC1::Int,NBC2::Int,J::Float64,Kz::Flo
  return evo_gates
 end
 
-function evo_gates_TEBD_LT_1_Ht(N::Int,sites,NBC1::Int,NBC2::Int,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64,dhx::Float64,dhy::Float64,omega::Float64,t::Float64)
+function evo_gates_TEBD_LT_1_Ht(N::Int,sites,NBC1::Int,NBC2::Int,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64,dhx::Float64,dhy::Float64,omega::Float64,t::Float64,tau::Float64)
   Jx = -J
   Jy = -J + Ky
   Jz = -J - Kz
@@ -97,7 +97,7 @@ end
 
 
 
-function evo_gates_TEBD_LT_5_Ht(N::Int,sites,hx::Float64,hy::Float64,hz::Float64,dhx::Float64,dhy::Float64,omega::Float64,t::Float64)
+function evo_gates_TEBD_LT_5_Ht(N::Int,sites,hx::Float64,hy::Float64,hz::Float64,dhx::Float64,dhy::Float64,omega::Float64,t::Float64,tau::Float64)
 
   global evo_gates = ITensor[]
   for j in 1:N
