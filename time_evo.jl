@@ -399,7 +399,7 @@ if time_evo_method == "TEBD"
         flush(file_out)
         GC.gc()
       else
-        if (i-1) % Int(t_total/tau/100) == 0 && i != 0
+        if i % Int(t_total/tau/100) == 0 && i != 0
           push!(DATE,Dates.DateTime(Dates.now()))
           local rightnow=DATE[end]
           local E0_print=round(obs_Ene0[i],digits=8)
@@ -502,7 +502,7 @@ elseif time_evo_method == "TEBD_Ht"
         flush(file_out)
         GC.gc()
       else
-        if (i-1) % Int(round(t_total/tau/100)) == 0 
+        if i % Int(round(t_total/tau/100)) == 0 
             push!(DATE,Dates.DateTime(Dates.now()))
             local rightnow=DATE[end]
             local E0_print=round(obs_Ene0[i],digits=8)
