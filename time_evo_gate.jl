@@ -67,14 +67,15 @@ function evo_gates_TEBD_LT_1_Ht(N::Int,sites,NBC1::Int,NBC2::Int,J::Float64,Kz::
      hj_inner =
      (hy+dhy*sin(omega * t))*op("Sy", s1) +
      (hx+dhx*cos(omega * t))*op("Sx", s1) +
-     hzsites[j]*op("Sz", s1) 
-     Gj = exp(-im * tau/2 * hj_inner)
-     push!(evo_gates, Gj)
+     hzsites[j]*op("Sz", s1) +
+     Jz*op("Sz", s1) * op("Sz", s2) +
+     Jy*op("Sy", s1) * op("Sy", s2) +
+     Jx*op("Sx", s1) * op("Sx", s2) 
+    # Gj = exp(-im * tau/2 * hj_inner)
+    # push!(evo_gates, Gj)
      
-     hj_inter =
-       Jz*op("Sz", s1) * op("Sz", s2) +
-       Jy*op("Sy", s1) * op("Sy", s2) +
-       Jx*op("Sx", s1) * op("Sx", s2) 
+    # hj_inter =
+
  
      Gj = exp(-im * tau/2 * hj_inter)
      push!(evo_gates, Gj)
