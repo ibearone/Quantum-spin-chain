@@ -87,7 +87,7 @@ function evo_gates_TEBD_LT_1_Ht(N::Int,sites,NBC1::Int,NBC2::Int,J::Float64,Kz::
      (hx+dhx*sin(omega * t))*op("Sx", s1) +
        hzsites[j]*op("Sz", s1) 
      Gj = exp(-im * tau/2 * hj_inner)
-     push!(gevo_gates, Gj)
+     push!(evo_gates, Gj)
    end
    append!(evo_gates, reverse(evo_gates));
  
