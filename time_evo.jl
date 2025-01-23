@@ -408,6 +408,7 @@ if time_evo_method == "TEBD"
           write(file_out, "\r")
           flush(file_out)
           GC.gc()
+        end
       end
     end
 
@@ -511,6 +512,7 @@ elseif time_evo_method == "TEBD_Ht"
             flush(file_out)
             GC.gc()
         end
+      end
     end
 
     if continue_evo == 0
