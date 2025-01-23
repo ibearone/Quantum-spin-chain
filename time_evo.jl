@@ -389,7 +389,16 @@ if time_evo_method == "TEBD"
         
       global psi_temp = apply(evo_gates, psi_temp; cutoff)
       normalize!(psi_temp)
-
+      if Int(round(t_total/tau/100)) ==0
+        push!(DATE,Dates.DateTime(Dates.now()))
+        local rightnow=DATE[end]
+        local E0_print=round(obs_Ene0[i],digits=8)
+        local Et_print=round( obs_Ene_evo[i],digits=8)
+        write(file_out, "\rTime step: $t/$t_total   Ene0 = $E0_print   Ene0 = $Et_print  Date: $rightnow")
+        write(file_out, "\r")
+        flush(file_out)
+        GC.gc()
+      else
         if (i-1) % Int(t_total/tau/100) == 0 && i != 0
           push!(DATE,Dates.DateTime(Dates.now()))
           local rightnow=DATE[end]
@@ -482,16 +491,26 @@ elseif time_evo_method == "TEBD_Ht"
       global psi_temp = apply(evo_gates, psi_temp; cutoff)
       normalize!(psi_temp)
 
-        if (i-1) % Int(t_total/tau/100) == 0 && i != 0
-          push!(DATE,Dates.DateTime(Dates.now()))
-          local rightnow=DATE[end]
-          local E0_print=round(obs_Ene0[i],digits=8)
-  
-          write(file_out, "\rTime step: $t/$t_total   Ene0 = $E0_print   Date: $rightnow")
-          write(file_out, "\r")
-          flush(file_out)
-          GC.gc()
-      end
+      if Int(round(t_total/tau/100)) ==0
+        push!(DATE,Dates.DateTime(Dates.now()))
+        local rightnow=DATE[end]
+        local E0_print=round(obs_Ene0[i],digits=8)
+
+        write(file_out, "\rTime step: $t/$t_total  sweep:$i  Ene0 = $E0_print   Date: $rightnow")
+        write(file_out, "\r")
+        flush(file_out)
+        GC.gc()
+      else
+        if (i-1) % Int(round(t_total/tau/100)) == 0 
+            push!(DATE,Dates.DateTime(Dates.now()))
+            local rightnow=DATE[end]
+            local E0_print=round(obs_Ene0[i],digits=8)
+    
+            write(file_out, "\rTime step: $t/$t_total  sweep:$i  Ene0 = $E0_print   Date: $rightnow")
+            write(file_out, "\r")
+            flush(file_out)
+            GC.gc()
+        end
     end
 
     if continue_evo == 0
