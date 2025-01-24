@@ -475,7 +475,7 @@ elseif time_evo_method == "TEBD_Ht"
         global evo_gates =evo_gates_TEBD_LT_5_Ht(N,sites,hx,hy,hz,dhx,dhy,omega,t0+t,tau)
       else
       end
-      push!( obs_Ene0,real(inner(psi_temp', H,psi_temp)))
+      push!( obs_Ene0,real(inner(psi_temp', H_evo,psi_temp)))
       push!( obs_p,abs(inner(psi_temp,psi[band_tar]))^2)
       push!( obs_sz,expect(psi_temp, "Sz"))
       push!( obs_sy,expect(psi_temp, "Sy"))
