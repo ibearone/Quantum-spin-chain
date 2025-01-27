@@ -604,7 +604,9 @@ elseif time_evo_method == "TDVP_Ht"
     ################# measures of TDVP loops ################
       step(; sweep) = sweep
       current_time(; current_time) = current_time
-      return_state(; state) = state
+      if write_psi_evo == 1
+        return_state(; state) = state
+      end
       measure_Ene0(; state) = real(inner(state',H_evo, state))
       measure_p(; state) = abs(inner(state,psi[band_tar]))^2
       measure_sz(; state) = expect(state, "Sz")
@@ -618,25 +620,47 @@ elseif time_evo_method == "TDVP_Ht"
           push!(DATE,Dates.DateTime(Dates.now()))
           local rightnow=DATE[end]
           println(file_out,"Time step: ", round(current_time,digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H_evo, state)),digits=8),"   Date: ",rightnow)
+          # 内存使用信息
+          current_memory = Sys.total_memory() - Sys.free_memory()
+          println(file_out, "   Current memory usage: ", current_memory / (1024^3), " GB")
+          # 打印单个变量（如 `state`）的内存占用
+          state_memory = Base.summarysize(state)
+          println(file_out, "   State size: ", state_memory / (1024^2), " MB")
           write(file_out, "\r")
           flush(file_out)
+          GC.gc()
         else
           if sweep % Int(round(t_total/tau/100)) == 0 && sweep != 0
             push!(DATE,Dates.DateTime(Dates.now()))
             local rightnow=DATE[end]
             println(file_out,"Time step: ", round(current_time,digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H_evo, state)),digits=8),"   Date: ",rightnow)
+            # 内存使用信息
+            current_memory = Sys.total_memory() - Sys.free_memory()
+            println(file_out, "   Current memory usage: ", current_memory / (1024^3), " GB")
+            # 打印单个变量（如 `state`）的内存占用
+            state_memory = Base.summarysize(state)
+            println(file_out, "   State size: ", state_memory / (1024^2), " MB")
             write(file_out, "\r")
             flush(file_out)
+            GC.gc()
           end
         end
         return nothing
       end
+      if write_psi_evo == 1
+        obs = observer(
+          "steps" => step, "times" => current_time, "states" => return_state, "Ene0" => measure_Ene0, 
+           "sz" => measure_sz, "sy" => measure_sy, "sx" => measure_sx,
+           "Cz" => measure_Cz, "Cy" => measure_Cy, "Cx" => measure_Cx,"timer" => timer, "p" => measure_p
+        )    
+      else
+        obs = observer(
+          "steps" => step, "times" => current_time, "Ene0" => measure_Ene0, 
+           "sz" => measure_sz, "sy" => measure_sy, "sx" => measure_sx,
+           "Cz" => measure_Cz, "Cy" => measure_Cy, "Cx" => measure_Cx,"timer" => timer, "p" => measure_p
+        )     
+      end
 
-      obs = observer(
-        "steps" => step, "times" => current_time, "states" => return_state, "Ene0" => measure_Ene0, 
-         "sz" => measure_sz, "sy" => measure_sy, "sx" => measure_sx,
-         "Cz" => measure_Cz, "Cy" => measure_Cy, "Cx" => measure_Cx,"timer" => timer, "p" => measure_p
-      )     
     ################# measures of TDVP loops ################
 
     psi_temp = tdvp( -im*H_evo_total,t_total,psi_init;updater=krylov_updater,updater_kwargs=(; tol=converg, eager=true),time_step=tau,cutoff,nsite, (step_observer!)=obs,outputlevel=0)
