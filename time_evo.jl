@@ -281,6 +281,7 @@ else
   write(file_out, "\rHamiltonian not assigned. (Lattice_type is limited to 1 or 5.)")
   push!(DATE,Dates.DateTime(Dates.now()))
   rightnow=DATE[end]
+
   write(file_out, "\rDate: $rightnow")
   write(file_out, "\r")
   exit()
@@ -602,8 +603,9 @@ elseif time_evo_method == "TDVP_Ht"
     H_evo_total=Ham_tot_TDVP(N,sites,H_evo,dhx,dhy,omega,t0)
 
     ################# measures of TDVP loops ################
+    t_start=Dates.DateTime(Dates.now())
       step(; sweep) = sweep
-      current_time(; current_time) = current_time
+      current_time(; current_time) = current_time #real(-im*current_time)
       if write_psi_evo == 1
         return_state(; state) = state
       end
@@ -633,7 +635,7 @@ elseif time_evo_method == "TDVP_Ht"
           if sweep % Int(round(t_total/tau/100)) == 0 && sweep != 0
             push!(DATE,Dates.DateTime(Dates.now()))
             local rightnow=DATE[end]
-            println(file_out,"Time step: ", round(current_time,digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H_evo, state)),digits=8),"   Date: ",rightnow)
+            println(file_out,"Time step: ", round(current_time,digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H_evo, state)),digits=8),"   Date: ",rightnow,"  Rest Time: ", (t_total/current_time-1)*round(Dates.value(rightnow-t_start)/1E3/60)," min")
             # 内存使用信息
             current_memory = Sys.total_memory() - Sys.free_memory()
             println(file_out, "Current memory usage: ", round(current_memory / (1024^3),digits=8), " GB")
@@ -663,7 +665,7 @@ elseif time_evo_method == "TDVP_Ht"
 
     ################# measures of TDVP loops ################
 
-    psi_temp = tdvp( -im*H_evo_total,t_total,psi_init;updater=krylov_updater,updater_kwargs=(; tol=converg),time_step=tau,cutoff,nsite, (step_observer!)=obs,outputlevel=0)
+    psi_temp = tdvp(-im*H_evo_total,t_total,psi_init;updater=krylov_updater,updater_kwargs=(; tol=converg),time_step=tau,cutoff,nsite, (step_observer!)=obs,outputlevel=0)
       
     if continue_evo == 0
       Ene_H0 = obs.Ene0
