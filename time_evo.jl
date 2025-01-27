@@ -663,7 +663,7 @@ elseif time_evo_method == "TDVP_Ht"
 
     ################# measures of TDVP loops ################
 
-    psi_temp = tdvp( -im*H_evo_total,t_total,psi_init;updater=krylov_updater,updater_kwargs=(; tol=converg, eager=true),time_step=tau,cutoff,nsite, (step_observer!)=obs,outputlevel=0)
+    psi_temp = tdvp( -im*H_evo_total,t_total,psi_init;updater=krylov_updater,updater_kwargs=(; tol=converg),time_step=tau,cutoff,nsite, (step_observer!)=obs,outputlevel=0)
       
     if continue_evo == 0
       Ene_H0 = obs.Ene0
