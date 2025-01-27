@@ -628,7 +628,7 @@ elseif time_evo_method == "TDVP_Ht"
           println(file_out, "   State size: ", state_memory / (1024^2), " MB")
           write(file_out, "\r")
           flush(file_out)
-          #GC.gc()
+          GC.gc()
         else
           if sweep % Int(round(t_total/tau/100)) == 0 && sweep != 0
             push!(DATE,Dates.DateTime(Dates.now()))
@@ -642,7 +642,7 @@ elseif time_evo_method == "TDVP_Ht"
             println(file_out, "State size: ", round(state_memory / (1024^2),digits=8), " MB")
             write(file_out, "\r")
             flush(file_out)
-            #GC.gc()
+            GC.gc()
           end
         end
         return nothing
