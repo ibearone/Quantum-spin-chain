@@ -628,7 +628,7 @@ elseif time_evo_method == "TDVP_Ht"
           println(file_out, "   State size: ", state_memory / (1024^2), " MB")
           write(file_out, "\r")
           flush(file_out)
-          GC.gc()
+          #GC.gc()
         else
           if sweep % Int(round(t_total/tau/100)) == 0 && sweep != 0
             push!(DATE,Dates.DateTime(Dates.now()))
@@ -636,13 +636,13 @@ elseif time_evo_method == "TDVP_Ht"
             println(file_out,"Time step: ", round(current_time,digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H_evo, state)),digits=8),"   Date: ",rightnow)
             # 内存使用信息
             current_memory = Sys.total_memory() - Sys.free_memory()
-            println(file_out, "   Current memory usage: ", current_memory / (1024^3), " GB")
+            println(file_out, "Current memory usage: ", round(current_memory / (1024^3),digits=8), " GB")
             # 打印单个变量（如 `state`）的内存占用
             state_memory = Base.summarysize(state)
-            println(file_out, "   State size: ", state_memory / (1024^2), " MB")
+            println(file_out, "State size: ", round(state_memory / (1024^2),digits=8), " MB")
             write(file_out, "\r")
             flush(file_out)
-            GC.gc()
+            #GC.gc()
           end
         end
         return nothing
