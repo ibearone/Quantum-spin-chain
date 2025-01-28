@@ -635,7 +635,7 @@ elseif time_evo_method == "TDVP_Ht"
           if sweep % Int(round(t_total/tau/100)) == 0 && sweep != 0
             push!(DATE,Dates.DateTime(Dates.now()))
             local rightnow=DATE[end]
-            println(file_out,"Time step: ", round(current_time,digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H_evo, state)),digits=8),"   Date: ",rightnow,"  Rest Time: ", (t_total/current_time-1)*round(Dates.value(rightnow-t_start)/1E3/60)," min")
+            println(file_out,"Time step: ", round(current_time,digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H_evo, state)),digits=8),"   Date: ",rightnow,"  Rest Time: ", round((t_total/current_time-1)*Dates.value(rightnow-t_start)/1E3/60,digits=2)," min")
             # 内存使用信息
             current_memory = Sys.total_memory() - Sys.free_memory()
             println(file_out, "Current memory usage: ", round(current_memory / (1024^3),digits=8), " GB")
