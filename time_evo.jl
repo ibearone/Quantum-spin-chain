@@ -137,7 +137,7 @@ write(file_out, "\r")
 write(file_out, "\rLattice Model: $Lattice_type ")
 write(file_out, "\rMobile_DW: $Mobile_DW ")
 
-if Lattice_type == 1 || Lattice_type ==5
+if Lattice_type == 1 || Lattice_type ==5 
     write(file_out, "\rSite Number 'N': $N")
     if Mobile_DW == 1
         write(file_out, "\rSite of BC 'NBC': $NBC")

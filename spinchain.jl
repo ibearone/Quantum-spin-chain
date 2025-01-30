@@ -34,7 +34,7 @@ file_in = open("Input", "r")
 
 Lattice_type = read_input(file_in,"Lattice",Int,0)
 Mobile_DW = read_input(file_in,"Mobile_DW",Int,0)
-if Lattice_type ==1 || Lattice_type ==5
+if Lattice_type ==1 || Lattice_type ==5 || Lattice_type == 6
     N  = read_input(file_in,"N",Int,0)
     J  = read_input(file_in,"J",Float64,0)
     if Mobile_DW == 1
@@ -104,7 +104,7 @@ write(file_out, "\r")
 write(file_out, "\rLattice Model: $Lattice_type ")
 write(file_out, "\rMobile_DW: $Mobile_DW ")
 
-if Lattice_type == 1 || Lattice_type ==5
+if Lattice_type == 1 || Lattice_type ==5 || Lattice_type == 6
     write(file_out, "\rSite Number 'N': $N")
     if Mobile_DW == 1
         write(file_out, "\rSite of BC 'NBC': $NBC")
@@ -186,12 +186,15 @@ redirect_stdout(file_out)
 if work_flow == "Start"
     
     ########## Constructing Spin Chain Hamiltonian ############
-    if Lattice_type ==1
+    if Lattice_type ==1 
         if Mobile_DW == 1
            global H,sites=Heisenberg_Ham_mobile(N,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
         else
            global H,sites=Heisenberg_Ham(N,J,Kz,Ky,hx,hy,hz)
         end
+
+    elseif Lattice_type == 6
+        global H,sites=Heisenberg_Ham_S1(N,J,Kz,Ky,hx,hy,hz)
     elseif Lattice_type ==2
      global H,sites=Heisenberg_Ham2D(Nx,Ny,J_inter,J,Kz,Ky,hx,hy,hz,BC_2D)
     elseif Lattice_type ==3
@@ -266,7 +269,7 @@ global SztotMPO,SytotMPO,SxtotMPO = Tot_spin_Op(sites)
 ##### Initialization for DMRG ######
 
 if Initial_Condition == "DW" || Initial_Condition == "Variation"
-    if Lattice_type ==1
+    if Lattice_type == 1 || Lattice_type == 6
     state=[n< (N+1)/2 ? "Up" : "Dn" for n=1:N]
     elseif Lattice_type == 2 || Lattice_type ==3 || Lattice_type ==4
         if BC_2D ==10
