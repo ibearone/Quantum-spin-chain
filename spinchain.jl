@@ -641,13 +641,13 @@ end
    
 jldsave("DMRG_data.jld2"; energy,E,sweep_num)
 
-file_ene = open("Ene_data_hy"*string(hy)*"_hx"*string(hx)*".txt", "w") 
+file_ene = open("Ene_data_hy"*string(hy)*"_hx"*string(hx)*"_Ky"*string(Ky)*".txt", "w") 
 writedlm(file_ene, energy)
 close(file_ene)
 
 ####### timer  ##################
 write(file_out, "\rSimulation Finished.")
-push!(DATE,Dates.Time(Dates.now()))
+push!(DATE,Dates.DateTime(Dates.now()))
 rightnow=DATE[end]
 runtime=round(Dates.value(DATE[end]-DATE[1])/1E3/60;digits = 2)
 write(file_out, "\rDate: $rightnow")
