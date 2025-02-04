@@ -499,7 +499,7 @@ end
 header = ["Sz" "Sx" "Sy" ]
 #global plot_Si_array_1=[]
 #global plot_Si_array_2=[]
-if     Lattice_type == 1
+if     Lattice_type == 1 || Lattice_type == 6
     for i in eachindex(psi)
         
         Szlocal=[]
@@ -572,7 +572,7 @@ end
 
 
 ################# Domain Wall Chirality #############
-if Lattice_type ==1
+if Lattice_type ==1 || Lattice_type == 6
     global DWxMPO,DWyMPO,DWzMPO=DWC_operator_1D(N::Int,sites)
 
 
