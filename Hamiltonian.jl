@@ -110,8 +110,8 @@ end
 
 
 ########## Spin Hamiltonian mobile (new) ############
-function Heisenberg_Ham_mobile_new(sites,BC_width::Int,BC_position::Float64,BC_lambda::Float64,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64)
-    N = length(sites)
+function Heisenberg_Ham_mobile_new(N::Int,BC_width::Int,BC_position::Float64,BC_lambda::Float64,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64)
+    sites = siteinds("S=1/2",N)
     Jx = -J
     Jy = -J + Ky
     Jz = -J - Kz
@@ -129,7 +129,7 @@ function Heisenberg_Ham_mobile_new(sites,BC_width::Int,BC_position::Float64,BC_l
         global os_Ham += hzsites[i],"Sz",i
     end
     global H=MPO(os_Ham,sites)
-return H
+return H,sites
 end
 
 

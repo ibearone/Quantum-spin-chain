@@ -10,6 +10,7 @@
 
 ########## Total Spin Operators  ############
 function Tot_spin_Op(sites)
+   
     global os_Sz= OpSum()
     for i =1:N
         global os_Sz += 1,"Sz",i
