@@ -39,6 +39,11 @@ if Lattice_type ==1 || Lattice_type ==5 || Lattice_type == 6
     J  = read_input(file_in,"J",Float64,0)
     if Mobile_DW == 1
         NBC  = read_input(file_in,"NBC",Int,1)
+    elseif Mobile_DW == 2
+        BC_width  = read_input(file_in,"BC_width",Int,0)
+        BC_position = read_input(file_in,"BC_position",Float,0)
+        BC_lambda = read_input(file_in,"BC_lambda",Float,0)
+
     end
 
  elseif Lattice_type == 2 || Lattice_type ==3
@@ -109,6 +114,10 @@ if Lattice_type == 1 || Lattice_type ==5 || Lattice_type == 6
     if Mobile_DW == 1
         write(file_out, "\rSite of BC 'NBC': $NBC")
         #write(file_out, "\rSite of BC2 'NBC2': $NBC2")
+    elseif Mobile_DW == 2
+        write(file_out, "\r Width of Domain wall 'BC_width' :$BC_width")
+        write(file_out, "\r Position of Domain wall 'BC_width' :$BC_position")
+        write(file_out, "\r lambda  :$BC_lambda")
     end
 
  elseif Lattice_type == 2 || Lattice_type ==3
@@ -189,6 +198,8 @@ if work_flow == "Start"
     if Lattice_type ==1 
         if Mobile_DW == 1
            global H,sites=Heisenberg_Ham_mobile(N,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
+        elseif Mobile_DW == 2
+        global H,sites=Heisenberg_Ham_mobile_new(N,BC_width,BC_position,BC_lambda,J,Kz,Ky,hx,hy,hz)
         else
            global H,sites=Heisenberg_Ham(N,J,Kz,Ky,hx,hy,hz)
         end

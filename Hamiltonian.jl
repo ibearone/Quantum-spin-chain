@@ -109,6 +109,30 @@ return H
 end
 
 
+########## Spin Hamiltonian mobile (new) ############
+function Heisenberg_Ham_mobile_new(sites,BC_width::Int,BC_position::Float64,BC_lambda::Float64,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64)
+    N = length(sites)
+    Jx = -J
+    Jy = -J + Ky
+    Jz = -J - Kz
+    hzsites = [hz.*(-atan.((n.-BC_width+1.5-BC_position)/(N/BC_lambda))./pi.-atan.((n.-0.5-BC_position)/(N/BC_lambda))./pi) for n=1:N];
+    ##### Hamiltonian ######
+    global os_Ham= OpSum()
+    for i =1:N-1
+        global os_Ham += Jz,"Sz",i,"Sz",i+1
+        global os_Ham += Jy,"Sy",i,"Sy",i+1
+        global os_Ham += Jx,"Sx",i,"Sx",i+1
+    end
+    for i = 1:N
+        global os_Ham += hy,"Sy",i
+        global os_Ham += hx,"Sx",i
+        global os_Ham += hzsites[i],"Sz",i
+    end
+    global H=MPO(os_Ham,sites)
+return H
+end
+
+
 ########## Spin Hamiltonian  ############
 function Heisenberg_Ham2D(Nx::Int,Ny::Int,J_inter::Float64,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64,BC)
     N = Nx * Ny
