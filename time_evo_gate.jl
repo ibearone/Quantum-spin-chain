@@ -141,13 +141,11 @@ function Ham_tot_TDVP(N::Int,sites,H_evo::MPO,dhx::Float64,dhy::Float64,omega::F
   return Ht
 end
 
-function Ham_BC_TDVP(N::Int,sites,BC_width::Int,t_total::Float64,BC_lambda::Float64,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64)
-  d= = map(v -> (t -> t/t_total*(N-BC_width)+1), velocity)
-  
+function Ham_BC_TDVP(N::Int,sites,BC_width::Int,t_total::Float64,BC_lambda::Float64,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64)  
   Jx = -J
   Jy = -J + Ky
   Jz = -J - Kz
-  hzsites = [hz.*(-atan.((n.-BC_width+1.5-d)/(N/BC_lambda))./pi.-atan.((n.-0.5-d)/(N/BC_lambda))./pi) for n=1:N];
+ 
   ##### Hamiltonian ######
   global os_Ham= OpSum()
   for i =1:N-1
@@ -158,9 +156,19 @@ function Ham_BC_TDVP(N::Int,sites,BC_width::Int,t_total::Float64,BC_lambda::Floa
   for i = 1:N
       global os_Ham += hy,"Sy",i
       global os_Ham += hx,"Sx",i
-      global os_Ham += hzsites[i],"Sz",i
   end
-  global Ht=MPO(os_Ham,sites)
+   H0=MPO(os_Ham,sites)
+  
+  Hztime=MPO[]
+  for i = 1:N
+      global os_Ham += 1,"Sz",i
+      push!(Hztime,MPO(os_Ham,sites))
+  end
+  pushfirst!(Hztime, H0)
+  hzsites =  Function[t -> hz.*(-atan.((n.-BC_width+1.5-(t/t_total*(N-BC_width)+1))/(N/BC_lambda))./pi.-atan.((n.-0.5-(t/t_total*(N-BC_width)+1))/(N/BC_lambda))./pi) for n=1:N];
+  pushfirst!(hzsites, t -> 1)
+  
+  Ht = TimeDependentSum(hzsites, Hztime)
 
 
   return Ht
