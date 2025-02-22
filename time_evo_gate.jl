@@ -141,6 +141,31 @@ function Ham_tot_TDVP(N::Int,sites,H_evo::MPO,dhx::Float64,dhy::Float64,omega::F
   return Ht
 end
 
+function Ham_BC_TDVP(N::Int,sites,BC_width::Int,t_total::Float64,BC_lambda::Float64,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64)
+  d= = map(v -> (t -> t/t_total*(N-BC_width)+1), velocity)
+  
+  Jx = -J
+  Jy = -J + Ky
+  Jz = -J - Kz
+  hzsites = [hz.*(-atan.((n.-BC_width+1.5-d)/(N/BC_lambda))./pi.-atan.((n.-0.5-d)/(N/BC_lambda))./pi) for n=1:N];
+  ##### Hamiltonian ######
+  global os_Ham= OpSum()
+  for i =1:N-1
+      global os_Ham += Jz,"Sz",i,"Sz",i+1
+      global os_Ham += Jy,"Sy",i,"Sy",i+1
+      global os_Ham += Jx,"Sx",i,"Sx",i+1
+  end
+  for i = 1:N
+      global os_Ham += hy,"Sy",i
+      global os_Ham += hx,"Sx",i
+      global os_Ham += hzsites[i],"Sz",i
+  end
+  global Ht=MPO(os_Ham,sites)
+
+
+  return Ht
+end
+
 ############### Define auto detection of length of psi_evo ##############################
 function detect_psi_evo_length(file)
   count = 0

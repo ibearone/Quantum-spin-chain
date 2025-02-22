@@ -44,6 +44,10 @@ if Lattice_type ==1 || Lattice_type == 5
     J  = read_input(file_in,"J",Float64,0)
     if Mobile_DW == 1
         NBC  = read_input(file_in,"NBC",Int,1)
+    elseif Mobile_DW == 2
+      BC_width  = read_input(file_in,"BC_width",Int,0)
+      BC_position = read_input(file_in,"BC_position",Float64,0)
+      BC_lambda = read_input(file_in,"BC_lambda",Float64,0)
     end
 
  elseif Lattice_type == 2 || Lattice_type ==3
@@ -107,7 +111,12 @@ if time_evo_method == "TDVP_Ht" || time_evo_method == "TEBD_Ht"
   omega = read_input(file_in,"omega",Float64,0)
   nsite = read_input(file_in,"nsite",Int,0)
   band_tar = read_input(file_in,"band_tar",Int,0)
+elseif time_evo_method == "TDVP_Ht_BC"
+  nsite = read_input(file_in,"nsite",Int,0)
+  band_tar = read_input(file_in,"band_tar",Int,0)
 end
+
+
 close(file_in)
 
 ########## End of Reading Inputs ############
@@ -142,6 +151,10 @@ if Lattice_type == 1 || Lattice_type ==5
     if Mobile_DW == 1
         write(file_out, "\rSite of BC 'NBC': $NBC")
         #write(file_out, "\rSite of BC2 'NBC2': $NBC2")
+    elseif Mobile_DW == 2
+      write(file_out, "\rWidth of Domain wall 'BC_width' :$BC_width")
+      write(file_out, "\rPosition of Domain wall 'BC_width' :$BC_position")
+      write(file_out, "\rlambda  :$BC_lambda")
     end
 
  elseif Lattice_type == 2 || Lattice_type ==3
@@ -210,6 +223,9 @@ if time_evo_method == "TDVP_Ht" || time_evo_method == "TEBD_Ht"
   write(file_out, "\romega: $omega")
   write(file_out, "\rnsite: $nsite")
   write(file_out, "\rband_tar: $band_tar")
+elseif time_evo_method == "TDVP_Ht_BC"
+  write(file_out, "\rnsite: $nsite")
+  write(file_out, "\rband_tar: $band_tar")
 end
 
 write(file_out, "\r")
@@ -266,6 +282,8 @@ flush(file_out)
 if Lattice_type == 1 
   if Mobile_DW == 1
     global H_evo = Heisenberg_Ham_mobile_2(sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
+  elseif Mobile_DW == 2
+    global H_evo = H
   else
     NBC=[1,N]
     global H_evo = Heisenberg_Ham_mobile_2(sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
@@ -585,7 +603,7 @@ elseif time_evo_method == "TDVP" || time_evo_method == "TDVP_Im_time"
      psi_evo=obs.states
     end
 
-elseif time_evo_method == "TDVP_Ht"
+elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP_Ht_BC"
     write(file_out, "\r!!! Start TDVP Calculation with time dependent Hamiltonian !!!")
     write(file_out, "\r")
     
@@ -599,8 +617,12 @@ elseif time_evo_method == "TDVP_Ht"
       write(file_out, "\r")
     else
     end
-    
-    H_evo_total=Ham_tot_TDVP(N,sites,H_evo,dhx,dhy,omega,t0)
+    if time_evo_method == "TDVP_Ht"
+     H_evo_total=Ham_tot_TDVP(N,sites,H_evo,dhx,dhy,omega,t0)
+    elseif time_evo_method == "TDVP_Ht_BC"
+     H_evo_total= Ham_BC_TDVP(N,sites,BC_width,t_total,BC_lambda,J,Kz,Ky,hx,hy,hz)
+    else
+    end
 
     ################# measures of TDVP loops ################
     t_start=Dates.DateTime(Dates.now())
