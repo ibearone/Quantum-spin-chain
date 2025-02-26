@@ -141,7 +141,7 @@ function Ham_tot_TDVP(N::Int,sites,H_evo::MPO,dhx::Float64,dhy::Float64,omega::F
   return Ht
 end
 
-function Ham_BC_TDVP(N::Int,sites,BC_width::Int,t_total::Float64,BC_lambda::Float64,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64)  
+function Ham_BC_TDVP(N::Int,sites,BC_length::Float64,t_total::Float64,BC_lambda::Float64,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64)  
   Jx = -J
   Jy = -J + Ky
   Jz = -J - Kz
@@ -165,7 +165,7 @@ function Ham_BC_TDVP(N::Int,sites,BC_width::Int,t_total::Float64,BC_lambda::Floa
       push!(Hztime,MPO(os_Ham,sites))
   end
   pushfirst!(Hztime, H0)
-  hzsites =  Function[t -> hz.*(-atan.((n.-BC_width+1.5-(t/t_total*(N-BC_width)+1))/(N/BC_lambda))./pi.-atan.((n.-0.5-(t/t_total*(N-BC_width)+1))/(N/BC_lambda))./pi) for n=1:N];
+  hzsites =  Function[t -> hz.*(-atan.((n.-BC_width+1.5-(t/t_total*BC_length+1))/(N/BC_lambda))./pi.-atan.((n.-0.5-(t/t_total*BC_length+1))/(N/BC_lambda))./pi) for n=1:N];
   pushfirst!(hzsites, t -> 1)
   
   Ht = TimeDependentSum(hzsites, Hztime)

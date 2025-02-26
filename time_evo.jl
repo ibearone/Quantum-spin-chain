@@ -112,8 +112,10 @@ if time_evo_method == "TDVP_Ht" || time_evo_method == "TEBD_Ht"
   nsite = read_input(file_in,"nsite",Int,0)
   band_tar = read_input(file_in,"band_tar",Int,0)
 elseif time_evo_method == "TDVP_Ht_BC"
+  BC_length = read_input(file_in,"BC_length",Float64,0)
   nsite = read_input(file_in,"nsite",Int,0)
   band_tar = read_input(file_in,"band_tar",Int,0)
+
 end
 
 
@@ -155,6 +157,7 @@ if Lattice_type == 1 || Lattice_type ==5
       write(file_out, "\rWidth of Domain wall 'BC_width' :$BC_width")
       write(file_out, "\rPosition of Domain wall 'BC_width' :$BC_position")
       write(file_out, "\rlambda  :$BC_lambda")
+
     end
 
  elseif Lattice_type == 2 || Lattice_type ==3
@@ -226,6 +229,7 @@ if time_evo_method == "TDVP_Ht" || time_evo_method == "TEBD_Ht"
 elseif time_evo_method == "TDVP_Ht_BC"
   write(file_out, "\rnsite: $nsite")
   write(file_out, "\rband_tar: $band_tar")
+  write(file_out, "\rLength of BC 'BC_length': $BC_length")
 end
 
 write(file_out, "\r")
@@ -620,7 +624,7 @@ elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP_Ht_BC"
     if time_evo_method == "TDVP_Ht"
      H_evo_total=Ham_tot_TDVP(N,sites,H_evo,dhx,dhy,omega,t0)
     elseif time_evo_method == "TDVP_Ht_BC"
-     H_evo_total= Ham_BC_TDVP(N,sites,BC_width,t_total,BC_lambda,J,Kz,Ky,hx,hy,hz)
+     H_evo_total= Ham_BC_TDVP(N,sites,BC_length,t_total,BC_lambda,J,Kz,Ky,hx,hy,hz)
     else
     end
 
