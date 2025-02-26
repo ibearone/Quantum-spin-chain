@@ -332,7 +332,7 @@ elseif continue_evo == 1
     Ene_H_evo=load("time_evo_data.jld2","Ene_H_evo")
     S_site=load("time_evo_data.jld2","S_site")
     DW_C=load("time_evo_data.jld2","DW_C")
-  elseif time_evo_method == "TDVP_Ht"
+  elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP_Ht_BC"
     Ene_H0=load("time_evo_data.jld2","Ene_H0")
     S_site=load("time_evo_data.jld2","S_site")
     DW_C=load("time_evo_data.jld2","DW_C")
@@ -691,7 +691,7 @@ elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP_Ht_BC"
 
     ################# measures of TDVP loops ################
 
-    psi_temp = tdvp(-im*H_evo_total,t_total,psi_init;updater=krylov_updater,updater_kwargs=(; tol=converg,maxiter=500,verbosity=0),time_step=tau,cutoff,nsite, (step_observer!)=obs,outputlevel=0)
+    psi_temp = tdvp(-im*H_evo_total,t_total,psi_init;updater=krylov_updater,updater_kwargs=(; tol=converg,maxiter=500,verbosity=1),time_step=tau,cutoff,nsite, (step_observer!)=obs,outputlevel=1)
       
     if continue_evo == 0
       Ene_H0 = obs.Ene0
