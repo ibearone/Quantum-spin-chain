@@ -141,7 +141,7 @@ function Ham_tot_TDVP(N::Int,sites,H_evo::MPO,dhx::Float64,dhy::Float64,omega::F
   return Ht
 end
 
-function Ham_BC_TDVP(N::Int,sites,BC_length::Float64,t_total::Float64,BC_lambda::Float64,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64)  
+function Ham_BC_TDVP(N::Int,sites,BC_width::Int,BC_length::Float64,t_total::Float64,BC_lambda::Float64,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64)  
   Jx = -J
   Jy = -J + Ky
   Jz = -J - Kz

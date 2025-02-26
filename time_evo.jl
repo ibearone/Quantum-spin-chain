@@ -624,7 +624,7 @@ elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP_Ht_BC"
     if time_evo_method == "TDVP_Ht"
      H_evo_total=Ham_tot_TDVP(N,sites,H_evo,dhx,dhy,omega,t0)
     elseif time_evo_method == "TDVP_Ht_BC"
-     H_evo_total= Ham_BC_TDVP(N,sites,BC_length,t_total,BC_lambda,J,Kz,Ky,hx,hy,hz)
+     H_evo_total= Ham_BC_TDVP(N,sites,BC_width,BC_length,t_total,BC_lambda,J,Kz,Ky,hx,hy,hz)
     else
     end
 
