@@ -761,7 +761,7 @@ if time_evo_method == "TEBD"
   jldsave("time_evo_data.jld2"; Ene_H0,Ene_H_evo,S_site,DW_C)
  elseif time_evo_method == "TDVP" || time_evo_method == "TDVP_Im_time"
   jldsave("time_evo_data.jld2"; Ene_H0,Ene_H_evo,S_site,DW_C)
- elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TEBD_Ht"
+ elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TEBD_Ht" || time_evo_method == "TDVP_Ht_BC"
   jldsave("time_evo_data.jld2"; Ene_H0,S_site,DW_C,p01)
  end
 
