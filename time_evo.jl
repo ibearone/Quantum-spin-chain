@@ -154,9 +154,9 @@ if Lattice_type == 1 || Lattice_type ==5
         write(file_out, "\rSite of BC 'NBC': $NBC")
         #write(file_out, "\rSite of BC2 'NBC2': $NBC2")
     elseif Mobile_DW == 2
-      write(file_out, "\rWidth of Domain wall 'BC_width' :$BC_width")
-      write(file_out, "\rPosition of Domain wall 'BC_width' :$BC_position")
-      write(file_out, "\rlambda  :$BC_lambda")
+      write(file_out, "\rWidth of Domain wall 'BC_width': $BC_width")
+      write(file_out, "\rPosition of Domain wall 'BC_width': $BC_position")
+      write(file_out, "\rlambda: $BC_lambda")
 
     end
 
