@@ -161,8 +161,9 @@ function Ham_BC_TDVP(N::Int,sites,BC_width::Int,BC_length::Float64,t_total::Floa
   
   Hztime=MPO[]
   for i = 1:N
-      global os_Ham += 1,"Sz",i
-      push!(Hztime,MPO(os_Ham,sites))
+      global os_Hamt= OpSum()
+      global os_Hamt += 1,"Sz",i
+      push!(Hztime,MPO(os_Hamt,sites))
   end
   pushfirst!(Hztime, H0)
   hzsites =  Function[t -> hz.*(-atan.((n.-BC_width+1.5-(t/t_total*BC_length+1))/(N/BC_lambda))./pi.-atan.((n.-0.5-(t/t_total*BC_length+1))/(N/BC_lambda))./pi) for n=1:N];
