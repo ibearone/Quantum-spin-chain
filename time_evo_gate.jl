@@ -186,7 +186,7 @@ function Heisenberg_Ham2D_TDVP(Nx::Int,Ny::Int,sites,J_inter::Float64,t_total::F
   Jz = -J - Kz
   hzsites = [0.0 for n=1:N]
   hzsites[1]=hz
-  hzsites[N-1]=-hz
+  hzsites[Nx]=-hz
   if BC == 10
     hzsites[Nx+1]= 0
     hzsites[N]= 0

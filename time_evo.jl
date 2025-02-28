@@ -815,8 +815,8 @@ elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP_Ht_BC"
           "Cz1" => measure_Cz1, "Cy1" => measure_Cy1, "Cx1" => measure_Cx1,"Cz2" => measure_Cz2, "Cy2" => measure_Cy2, "Cx2" => measure_Cx2,"timer" => timer, "p01" => measure_p01, "p02" => measure_p02, "p03" => measure_p03, "p04" => measure_p04
        )     
      end
-     #psi_temp = tdvp(-im*H_evo_total,t_total,psi_init;updater=krylov_updater,updater_kwargs=(; tol=converg,maxiter=500,verbosity=0),time_step=tau,cutoff,nsite, (step_observer!)=obs,outputlevel=0)
-     psi_temp = tdvp(-im*H_evo, t_total, psi_init; time_step=tau, cutoff, (step_observer!)=obs, outputlevel=0)
+     psi_temp = tdvp(-im*H_evo_total,t_total,psi_init;updater=krylov_updater,updater_kwargs=(; tol=converg,maxiter=500,verbosity=0),time_step=tau,cutoff,nsite, (step_observer!)=obs,outputlevel=0)
+     #psi_temp = tdvp(-im*H_evo, t_total, psi_init; time_step=tau, cutoff, (step_observer!)=obs, outputlevel=0)
      if continue_evo == 0
        Ene_H0 = obs.Ene0
        S_site=(obs.sz,obs.sy,obs.sx)
