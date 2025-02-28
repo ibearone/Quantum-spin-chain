@@ -896,7 +896,7 @@ if time_evo_method == "TEBD"
  elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TEBD_Ht" || time_evo_method == "TDVP_Ht_BC"
   jldsave("time_evo_data.jld2"; Ene_H0,S_site,DW_C,p01)
  elseif time_evo_method == "TDVP_Ht_2D"
-  jldsave("time_evo_data.jld2"; Ene_H0,S_site,DW_C,p0i)
+  jldsave("time_evo_data.jld2"; Ene_H0,S_site,DW_C1,DW_C2,p0i)
  end
 
 ####### timer  ##################
