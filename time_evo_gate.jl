@@ -202,8 +202,7 @@ function Heisenberg_Ham2D_TDVP(Nx::Int,Ny::Int,sites,J_inter::Float64,t_total::F
   end
   ##### Hamiltonian ######
 
-
-lattice = square_lattice(Nx, Ny; yperiodic=false)
+  lattice = ladder_lattice(Nx, Ny)
 
 
 

@@ -352,7 +352,8 @@ elseif continue_evo == 1
   elseif time_evo_method == "TDVP_Ht_2D"
     Ene_H0=load("time_evo_data.jld2","Ene_H0")
     S_site=load("time_evo_data.jld2","S_site")
-    DW_C=load("time_evo_data.jld2","DW_C")
+    DW_C1=load("time_evo_data.jld2","DW_C1")
+    DW_C2=load("time_evo_data.jld2","DW_C2")
     p0i=load("time_evo_data.jld2","p0i")
   end
 
