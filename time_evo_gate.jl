@@ -175,6 +175,85 @@ function Ham_BC_TDVP(N::Int,sites,BC_width::Int,BC_length::Float64,t_total::Floa
   return Ht
 end
 
+
+########## Spin Hamiltonian 2D gate ############
+function Heisenberg_Ham2D_TDVP(Nx::Int,Ny::Int,sites,J_inter::Float64,t_total::Float64,Jin_sigma::Float64,J_movinglength::Float64,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64,BC)
+  N = Nx * Ny
+
+  J_inter = -J_inter
+  Jx = -J
+  Jy = -J + Ky
+  Jz = -J - Kz
+  hzsites = [0.0 for n=1:N]
+  hzsites[1]=hz
+  hzsites[N-1]=-hz
+  if BC == 10
+     hzsites[2]= 0
+     hzsites[N]= 0
+  elseif BC == 11
+      hzsites[2]= hz
+      hzsites[N]= -hz
+  elseif BC == 12
+      hzsites[2]= -hz
+      hzsites[N]= hz
+  elseif BC == 13
+      hzsites[2]= hz
+      hzsites[N]= hz
+  end
+  ##### Hamiltonian ######
+
+
+lattice = square_lattice(Nx, Ny; yperiodic=false)
+
+
+
+global os_Ham= OpSum()
+for i = 1:(Nx-1)
+  site_1 =lattice[i].s1
+  site_2 =lattice[i].s2
+
+  site_3 =lattice[i+Nx-1].s1
+  site_4 =lattice[i+Nx-1].s2
+  os_Ham .+= Jx, "Sx", site_1, "Sx", site_2
+  os_Ham .+= Jy, "Sy", site_1, "Sy", site_2
+  os_Ham .+= Jz, "Sz", site_1, "Sz", site_2
+
+  os_Ham .+= Jx, "Sx", site_3, "Sx", site_4
+  os_Ham .+= Jy, "Sy", site_3, "Sy", site_4
+  os_Ham .+= Jz, "Sz", site_3, "Sz", site_4
+end
+
+for i = 1:N
+  os_Ham .+= hy,"Sy",i
+  os_Ham .+= hx,"Sx",i
+  os_Ham .+= hzsites[i],"Sz",i
+end
+global    H0=MPO(os_Ham,sites)
+HJintime=MPO[]
+for i = 1:Nx
+    global os_Hamt= OpSum()
+    site_1 =lattice[i+2*Nx-2].s1
+    site_2 =lattice[i+2*Nx-2].s2
+
+    os_Ham .+= 1, "Sx", site_1, "Sx", site_2
+    os_Ham .+= 1, "Sy", site_1, "Sy", site_2
+    os_Ham .+= 1, "Sz", site_1, "Sz", site_2
+    push!(HJintime,MPO(os_Hamt,sites))
+end
+
+  push!(HJintime,MPO(os_Hamt,sites))
+
+
+  pushfirst!(Hztime, H0)
+  Jinsites =  Function[t -> J_inter.*exp(-((n-(-10+t/t_total*J_movinglength)/Nx/Jin_sigma)^2)) for n=1:Nx];
+  pushfirst!(Jinsites, t -> 1)
+    
+  Ht = TimeDependentSum(Jinsites, Hztime)
+return Ht
+end
+
+
+
 ############### Define auto detection of length of psi_evo ##############################
 function detect_psi_evo_length(file)
   count = 0

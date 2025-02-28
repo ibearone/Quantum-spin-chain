@@ -115,6 +115,11 @@ elseif time_evo_method == "TDVP_Ht_BC"
   BC_length = read_input(file_in,"BC_length",Float64,0)
   nsite = read_input(file_in,"nsite",Int,0)
   band_tar = read_input(file_in,"band_tar",Int,0)
+elseif time_evo_method == "TDVP_Ht_2D"
+  Jin_sigma = read_input(file_in,"Jin_sigma",Float64,0)
+  J_movinglength = read_input(file_in,"J_movinglength",Float64,0)
+  nsite = read_input(file_in,"nsite",Int,0)
+  band_tar = read_input(file_in,"band_tar",Int,0)
 
 end
 
@@ -230,6 +235,11 @@ elseif time_evo_method == "TDVP_Ht_BC"
   write(file_out, "\rnsite: $nsite")
   write(file_out, "\rband_tar: $band_tar")
   write(file_out, "\rLength of BC 'BC_length': $BC_length")
+elseif time_evo_method == "TDVP_Ht_2D"
+  write(file_out, "\rnsite: $nsite")
+  write(file_out, "\rband_tar: $band_tar")
+  write(file_out, "\rWidth of coupling 'Jin_sigma': $Jin_sigma")
+  write(file_out, "\rLength of coupling 'J_movinglength': $J_movinglength")
 end
 
 write(file_out, "\r")
@@ -293,7 +303,9 @@ if Lattice_type == 1
     global H_evo = Heisenberg_Ham_mobile_2(sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
   end
   global DWxMPO,DWyMPO,DWzMPO=DWC_operator_1D(N,sites)
-
+elseif Lattice_type == 3
+  global H_evo = H
+  global DWxMPO1,DWyMPO1,DWzMPO1,DWxMPO2,DWyMPO2,DWzMPO2=DWC_operator_2D(Nx,Ny,sites)
 elseif Lattice_type ==5
 
   global H_evo=H
@@ -332,11 +344,16 @@ elseif continue_evo == 1
     Ene_H_evo=load("time_evo_data.jld2","Ene_H_evo")
     S_site=load("time_evo_data.jld2","S_site")
     DW_C=load("time_evo_data.jld2","DW_C")
-  elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP_Ht_BC"
+  elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP_Ht_BC" 
     Ene_H0=load("time_evo_data.jld2","Ene_H0")
     S_site=load("time_evo_data.jld2","S_site")
     DW_C=load("time_evo_data.jld2","DW_C")
     p01=load("time_evo_data.jld2","p01")
+  elseif time_evo_method == "TDVP_Ht_2D"
+    Ene_H0=load("time_evo_data.jld2","Ene_H0")
+    S_site=load("time_evo_data.jld2","S_site")
+    DW_C=load("time_evo_data.jld2","DW_C")
+    p0i=load("time_evo_data.jld2","p0i")
   end
 
   global psi_init=psi_evo_end
@@ -607,7 +624,7 @@ elseif time_evo_method == "TDVP" || time_evo_method == "TDVP_Im_time"
      psi_evo=obs.states
     end
 
-elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP_Ht_BC"
+elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP_Ht_BC" 
     write(file_out, "\r!!! Start TDVP Calculation with time dependent Hamiltonian !!!")
     write(file_out, "\r")
     
@@ -625,6 +642,7 @@ elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP_Ht_BC"
      H_evo_total=Ham_tot_TDVP(N,sites,H_evo,dhx,dhy,omega,t0)
     elseif time_evo_method == "TDVP_Ht_BC"
      H_evo_total= Ham_BC_TDVP(N,sites,BC_width,BC_length,t_total,BC_lambda,J,Kz,Ky,hx,hy,hz)
+
     else
     end
 
@@ -712,6 +730,115 @@ elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP_Ht_BC"
       end
     end
 
+  elseif time_evo_method == "TDVP_Ht_2D"
+    write(file_out, "\r!!! Start TDVP Calculation with time dependent Hamiltonian for moving inter-chain coupling !!!")
+    write(file_out, "\r")
+    
+    if continue_evo == 1
+      t0=t_end
+      write(file_out, "\r!!! Start time evolution from t0=$t_end !!!")
+      write(file_out, "\r")
+    elseif continue_evo == 0
+      t0=0.0
+      write(file_out, "\r!!! Start time evolution from t0=0 !!!")
+      write(file_out, "\r")
+    else
+    end
+
+     H_evo_total= Heisenberg_Ham2D_TDVP(Nx,Ny,sites,J_inter,t_total,Jin_sigma,J_movinglength,J,Kz,Ky,hx,hy,hz,BC_2D)
+     
+    ################# measures of TDVP loops ################ 
+    
+     t_start=Dates.DateTime(Dates.now())
+     step(; sweep) = sweep
+     current_time(; current_time) = current_time #real(-im*current_time)
+     if write_psi_evo == 1
+       return_state(; state) = state
+     end
+     measure_Ene0(; state) = real(inner(state',H_evo, state))
+     measure_p01(; state) = abs(inner(state,psi[1]))^2
+     measure_p02(; state) = abs(inner(state,psi[2]))^2
+     measure_p03(; state) = abs(inner(state,psi[3]))^2
+     measure_p04(; state) = abs(inner(state,psi[4]))^2
+     measure_sz(; state) = expect(state, "Sz")
+     measure_sy(; state) = expect(state, "Sy")
+     measure_sx(; state) = expect(state, "Sx")
+     measure_Cz1(; state) = inner(state',DWzMPO1,state)
+     measure_Cy1(; state) = inner(state',DWyMPO1,state)
+     measure_Cx1(; state) = inner(state',DWxMPO1,state)
+     measure_Cz2(; state) = inner(state',DWzMPO2,state)
+     measure_Cy2(; state) = inner(state',DWyMPO2,state)
+     measure_Cx2(; state) = inner(state',DWxMPO2,state)
+     timer(; sweep, current_time, state) = begin
+       if Int(round(t_total/tau/100)) ==0
+         push!(DATE,Dates.DateTime(Dates.now()))
+         local rightnow=DATE[end]
+         println(file_out,"Time step: ", round(current_time,digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H_evo, state)),digits=8),"   Date: ",rightnow)
+         # 内存使用信息
+         current_memory = Sys.total_memory() - Sys.free_memory()
+         println(file_out, "   Current memory usage: ", current_memory / (1024^3), " GB")
+         # 打印单个变量（如 `state`）的内存占用
+         state_memory = Base.summarysize(state)
+         println(file_out, "   State size: ", state_memory / (1024^2), " MB")
+         write(file_out, "\r")
+         flush(file_out)
+         GC.gc()
+       else
+         if sweep % Int(round(t_total/tau/100)) == 0 && sweep != 0
+           push!(DATE,Dates.DateTime(Dates.now()))
+           local rightnow=DATE[end]
+           println(file_out,"Time step: ", round(current_time,digits=2),"/",t_total,"   Ene0 = ", round(real(inner(state', H_evo, state)),digits=8),"   Date: ",rightnow,"  Rest Time: ", round((t_total/current_time-1)*Dates.value(rightnow-t_start)/1E3/60,digits=2)," min")
+           # 内存使用信息
+           current_memory = Sys.total_memory() - Sys.free_memory()
+           println(file_out, "Current memory usage: ", round(current_memory / (1024^3),digits=8), " GB")
+           # 打印单个变量（如 `state`）的内存占用
+           state_memory = Base.summarysize(state)
+           println(file_out, "State size: ", round(state_memory / (1024^2),digits=8), " MB")
+           write(file_out, "\r")
+           flush(file_out)
+           GC.gc()
+         end
+       end
+       return nothing
+     end
+     if write_psi_evo == 1
+       obs = observer(
+         "steps" => step, "times" => current_time, "states" => return_state, "Ene0" => measure_Ene0, 
+         "sz" => measure_sz, "sy" => measure_sy, "sx" => measure_sx,
+         "Cz1" => measure_Cz1, "Cy1" => measure_Cy1, "Cx1" => measure_Cx1,"Cz2" => measure_Cz2, "Cy2" => measure_Cy2, "Cx2" => measure_Cx2,"timer" => timer, "p01" => measure_p01, "p02" => measure_p02, "p03" => measure_p03, "p04" => measure_p04
+      )     
+     else
+       obs = observer(
+         "steps" => step, "times" => current_time, "Ene0" => measure_Ene0, 
+          "sz" => measure_sz, "sy" => measure_sy, "sx" => measure_sx,
+          "Cz1" => measure_Cz1, "Cy1" => measure_Cy1, "Cx1" => measure_Cx1,"Cz2" => measure_Cz2, "Cy2" => measure_Cy2, "Cx2" => measure_Cx2,"timer" => timer, "p01" => measure_p01, "p02" => measure_p02, "p03" => measure_p03, "p04" => measure_p04
+       )     
+     end
+     psi_temp = tdvp(-im*H_evo_total,t_total,psi_init;updater=krylov_updater,updater_kwargs=(; tol=converg,maxiter=500,verbosity=0),time_step=tau,cutoff,nsite, (step_observer!)=obs,outputlevel=0)
+    
+     if continue_evo == 0
+       Ene_H0 = obs.Ene0
+       S_site=(obs.sz,obs.sy,obs.sx)
+       DW_C1=(obs.Cz1,obs.Cy1,obs.Cx1)
+       DW_C2=(obs.Cz2,obs.Cy2,obs.Cx2)
+       p0i=(obs.p01,obs.p02,obs.p03,obs.p04)
+       if write_psi_evo == 1
+         psi_evo=obs.states
+       end
+     elseif continue_evo == 1
+       Ene_H0=vcat(Ene_H0, obs.Ene0)
+       p01=(vcat(p0i[1],obs.p01),vcat(p0i[2],obs.p02),vcat(p0i[3],obs.p03),vcat(p0i[4],obs.p04))
+       S_site=(vcat(S_site[1],obs.sz),vcat(S_site[2],obs.sy),vcat(S_site[3],obs.sx))
+       DW_C1 = (vcat(DW_C1[1],obs.Cz1),vcat(DW_C1[2],obs.Cy1),vcat(DW_C1[3],obs.Cx1))
+       DW_C2 = (vcat(DW_C2[1],obs.Cz2),vcat(DW_C2[2],obs.Cy2),vcat(DW_C2[3],obs.Cx2))
+ 
+ 
+       if write_psi_evo == 1
+         psi_evo=vcat(psi_evo,obs.states)
+       end
+     end
+
+
 else
   write(file_out, "\rTime_evo_method is not assigned.")
   push!(DATE,Dates.Time(Dates.now()))
@@ -767,6 +894,8 @@ if time_evo_method == "TEBD"
   jldsave("time_evo_data.jld2"; Ene_H0,Ene_H_evo,S_site,DW_C)
  elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TEBD_Ht" || time_evo_method == "TDVP_Ht_BC"
   jldsave("time_evo_data.jld2"; Ene_H0,S_site,DW_C,p01)
+ elseif time_evo_method == "TDVP_Ht_2D"
+  jldsave("time_evo_data.jld2"; Ene_H0,S_site,DW_C,p0i)
  end
 
 ####### timer  ##################
