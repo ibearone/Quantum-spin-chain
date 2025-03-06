@@ -241,7 +241,7 @@ for i = 1:Nx
 end
 
   pushfirst!(HJintime, H0)
-  Jinsites =  Function[t -> J_inter.*exp(-((n-(-10+t/t_total*J_movinglength))/N/Jin_sigma)^2) for n=1:Nx];
+  Jinsites =  Function[t -> J_inter.*exp(-((n-(-5+t/t_total*J_movinglength))/N/Jin_sigma)^2) for n=1:Nx];
   pushfirst!(Jinsites, t -> 1)
     
   Ht = TimeDependentSum(Jinsites, HJintime)
