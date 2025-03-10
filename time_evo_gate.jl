@@ -313,7 +313,7 @@ for i = 1:Nx
 end
 
   pushfirst!(HJintime, H0)
-  Jinsites =  Function[t ->  J_inter.*heaviside(1-abs(t/t_total*(Nx+2)-n))*(1-abs(t/t_total*(Nx+2)-n))for n=1:Nx];
+  Jinsites =  Function[t ->  J_inter.*heaviside(1-abs(t/t_total*(Nx+2)-n))*(1-abs(t/t_total*(Nx+2)-n)) for n=1:Nx];
   pushfirst!(Jinsites, t -> 1)
     
   Ht = TimeDependentSum(Jinsites, HJintime)

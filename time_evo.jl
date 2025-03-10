@@ -754,7 +754,7 @@ elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP_Ht_BC"
     end
     if time_evo_method == "TDVP_Ht_2D" 
      H_evo_total= Heisenberg_Ham2D_TDVP(Nx,Ny,sites,J_inter,t_total,Jin_sigma,J_movinglength,J,Kz,Ky,hx,hy,hz,BC_2D)
-    elseif       time_evo_method == "TDVP_Ht_2D_linear" 
+    elseif time_evo_method == "TDVP_Ht_2D_linear" 
      H_evo_total= Heisenberg_Ham2D_TDVP_linear(Nx,Ny,sites,J_inter,t_total,J,Kz,Ky,hx,hy,hz,BC_2D)
     end
     ################# measures of TDVP loops ################ 
