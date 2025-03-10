@@ -303,7 +303,7 @@ if Lattice_type == 1
     global H_evo = Heisenberg_Ham_mobile_2(sites,NBC[1],NBC[2],J,Kz,Ky,hx,hy,hz)
   end
   global DWxMPO,DWyMPO,DWzMPO=DWC_operator_1D(N,sites)
-elseif Lattice_type == 3
+elseif Lattice_type == 3 || Lattice_type == 4
   global H_evo = H
   global DWxMPO1,DWyMPO1,DWzMPO1,DWxMPO2,DWyMPO2,DWzMPO2=DWC_operator_2D(Nx,Ny,sites)
 elseif Lattice_type ==5
