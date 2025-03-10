@@ -120,7 +120,7 @@ elseif time_evo_method == "TDVP_Ht_2D"
   J_movinglength = read_input(file_in,"J_movinglength",Float64,0)
   nsite = read_input(file_in,"nsite",Int,0)
   band_tar = read_input(file_in,"band_tar",Int,0)
-elseif time_evo_method == "TDVP_Ht_2D_linear"
+elseif time_evo_method == "TDVP_Ht_2D_linear" || time_evo_method == "TDVP_2D"
 
   nsite = read_input(file_in,"nsite",Int,0)
   band_tar = read_input(file_in,"band_tar",Int,0)
@@ -244,7 +244,7 @@ elseif time_evo_method == "TDVP_Ht_2D"
   write(file_out, "\rband_tar: $band_tar")
   write(file_out, "\rWidth of coupling 'Jin_sigma': $Jin_sigma")
   write(file_out, "\rLength of coupling 'J_movinglength': $J_movinglength")
-elseif time_evo_method == "TDVP_Ht_2D_linear"
+elseif time_evo_method == "TDVP_Ht_2D_linear" || time_evo_method == "TDVP_2D"
   write(file_out, "\rnsite: $nsite")
   write(file_out, "\rband_tar: $band_tar")
 end
@@ -356,7 +356,7 @@ elseif continue_evo == 1
     S_site=load("time_evo_data.jld2","S_site")
     DW_C=load("time_evo_data.jld2","DW_C")
     p01=load("time_evo_data.jld2","p01")
-  elseif time_evo_method == "TDVP_Ht_2D" || time_evo_method == "TDVP_Ht_2D_linear"
+  elseif time_evo_method == "TDVP_Ht_2D" || time_evo_method == "TDVP_Ht_2D_linear" || time_evo_method == "TDVP_2D"
     Ene_H0=load("time_evo_data.jld2","Ene_H0")
     S_site=load("time_evo_data.jld2","S_site")
     DW_C1=load("time_evo_data.jld2","DW_C1")
@@ -738,7 +738,7 @@ elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP_Ht_BC"
       end
     end
 
-  elseif time_evo_method == "TDVP_Ht_2D" || time_evo_method == "TDVP_Ht_2D_linear" 
+  elseif time_evo_method == "TDVP_Ht_2D" || time_evo_method == "TDVP_Ht_2D_linear" || time_evo_method == "TDVP_2D"
     write(file_out, "\r!!! Start TDVP Calculation with time dependent Hamiltonian for moving inter-chain coupling !!!")
     write(file_out, "\r")
     
@@ -752,11 +752,7 @@ elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP_Ht_BC"
       write(file_out, "\r")
     else
     end
-    if time_evo_method == "TDVP_Ht_2D" 
-     H_evo_total= Heisenberg_Ham2D_TDVP(Nx,Ny,sites,J_inter,t_total,Jin_sigma,J_movinglength,J,Kz,Ky,hx,hy,hz,BC_2D)
-    elseif time_evo_method == "TDVP_Ht_2D_linear" 
-     H_evo_total= Heisenberg_Ham2D_TDVP_linear(Nx,Ny,sites,J_inter,t_total,J,Kz,Ky,hx,hy,hz,BC_2D)
-    end
+
     ################# measures of TDVP loops ################ 
     
      t_start=Dates.DateTime(Dates.now())
@@ -824,8 +820,16 @@ elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TDVP_Ht_BC"
           "Cz1" => measure_Cz1, "Cy1" => measure_Cy1, "Cx1" => measure_Cx1,"Cz2" => measure_Cz2, "Cy2" => measure_Cy2, "Cx2" => measure_Cx2,"timer" => timer, "p01" => measure_p01, "p02" => measure_p02, "p03" => measure_p03, "p04" => measure_p04
        )     
      end
-     psi_temp = tdvp(-im*H_evo_total,t_total,psi_init;updater=krylov_updater,updater_kwargs=(; tol=converg,maxiter=500,verbosity=0),time_step=tau,cutoff,nsite, (step_observer!)=obs,outputlevel=0)
-     #psi_temp = tdvp(-im*H_evo, t_total, psi_init; time_step=tau, cutoff, (step_observer!)=obs, outputlevel=0)
+     if time_evo_method == "TDVP_Ht_2D" 
+      H_evo_total= Heisenberg_Ham2D_TDVP(Nx,Ny,sites,J_inter,t_total,Jin_sigma,J_movinglength,J,Kz,Ky,hx,hy,hz,BC_2D)
+      psi_temp = tdvp(-im*H_evo_total,t_total,psi_init;updater=krylov_updater,updater_kwargs=(; tol=converg,maxiter=500,verbosity=0),time_step=tau,cutoff,nsite, (step_observer!)=obs,outputlevel=0)
+     elseif time_evo_method == "TDVP_Ht_2D_linear" 
+      H_evo_total= Heisenberg_Ham2D_TDVP_linear(Nx,Ny,sites,J_inter,t_total,J,Kz,Ky,hx,hy,hz,BC_2D)
+      psi_temp = tdvp(-im*H_evo_total,t_total,psi_init;updater=krylov_updater,updater_kwargs=(; tol=converg,maxiter=500,verbosity=0),time_step=tau,cutoff,nsite, (step_observer!)=obs,outputlevel=0)
+     elseif time_evo_method == "TDVP_2D"
+      psi_temp = tdvp(-im*H_evo, t_total, psi_init; time_step=tau, cutoff, (step_observer!)=obs, outputlevel=0)
+     end
+
      if continue_evo == 0
        Ene_H0 = obs.Ene0
        S_site=(obs.sz,obs.sy,obs.sx)
@@ -904,7 +908,7 @@ if time_evo_method == "TEBD"
   jldsave("time_evo_data.jld2"; Ene_H0,Ene_H_evo,S_site,DW_C)
  elseif time_evo_method == "TDVP_Ht" || time_evo_method == "TEBD_Ht" || time_evo_method == "TDVP_Ht_BC"
   jldsave("time_evo_data.jld2"; Ene_H0,S_site,DW_C,p01)
- elseif time_evo_method == "TDVP_Ht_2D" ||  time_evo_method == "TDVP_Ht_2D_linear" 
+ elseif time_evo_method == "TDVP_Ht_2D" ||  time_evo_method == "TDVP_Ht_2D_linear" || time_evo_method == "TDVP_2D"
   jldsave("time_evo_data.jld2"; Ene_H0,S_site,DW_C1,DW_C2,p0i)
  end
 
