@@ -214,6 +214,73 @@ function Heisenberg_Ham_ladder_single(Nx::Int,Ny::Int,Nc::Int,J_inter::Float64,J
 return H,sites
 end
 
+function Heisenberg_Ham_ladder_single_2(sites,Nx::Int,Ny::Int,Nc::Int,J_inter::Float64,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64,BC)
+    N = Nx * Ny
+  
+    J_inter = -J_inter
+    Jx = -J
+    Jy = -J + Ky
+    Jz = -J - Kz
+    hzsites = [0.0 for n=1:N]
+    hzsites[1]=hz
+    hzsites[Nx]=-hz
+    if BC == 10
+       hzsites[Nx+1]= 0
+       hzsites[N]= 0
+    elseif BC == 11
+        hzsites[Nx+1]= hz
+        hzsites[N]= -hz
+    elseif BC == 12
+        hzsites[Nx+1]= -hz
+        hzsites[N]= hz
+    elseif BC == 13
+        hzsites[Nx+1]= hz
+        hzsites[N]= hz
+    end
+    ##### Hamiltonian ######
+
+
+ lattice = ladder_lattice(Nx, Ny)
+
+
+
+ global os_Ham= OpSum()
+ for i = 1:(Nx-1)
+    site_1 =lattice[i].s1
+    site_2 =lattice[i].s2
+
+    site_3 =lattice[i+Nx-1].s1
+    site_4 =lattice[i+Nx-1].s2
+    os_Ham .+= Jx, "Sx", site_1, "Sx", site_2
+    os_Ham .+= Jy, "Sy", site_1, "Sy", site_2
+    os_Ham .+= Jz, "Sz", site_1, "Sz", site_2
+
+    os_Ham .+= Jx, "Sx", site_3, "Sx", site_4
+    os_Ham .+= Jy, "Sy", site_3, "Sy", site_4
+    os_Ham .+= Jz, "Sz", site_3, "Sz", site_4
+ end
+
+ for i = Nc
+    site_1 =lattice[i+2*Nx-2].s1
+    site_2 =lattice[i+2*Nx-2].s2
+
+    os_Ham .+= J_inter, "Sx", site_1, "Sx", site_2
+    os_Ham .+= J_inter, "Sy", site_1, "Sy", site_2
+    os_Ham .+= J_inter, "Sz", site_1, "Sz", site_2
+
+ end
+
+
+
+ for i = 1:N
+    os_Ham .+= hy,"Sy",i
+    os_Ham .+= hx,"Sx",i
+    os_Ham .+= hzsites[i],"Sz",i
+ end
+ global H=MPO(os_Ham,sites)
+return H
+end
+
 
 
 function Heisenberg_Ham_ladder_single_mobile(Nx::Int,Ny::Int,Nc::Int,NBC1C1::Int,NBC2C1::Int,NBC1C2::Int,NBC2C2::Int,J_inter::Float64,J::Float64,Kz::Float64,Ky::Float64,hx::Float64,hy::Float64,hz::Float64,BC)
