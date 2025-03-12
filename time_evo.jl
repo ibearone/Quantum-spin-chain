@@ -149,6 +149,7 @@ if work_flow == "time_evo"
 
 write(file_out, "###############################################")
 write(file_out, "\rOutput file of Quantum Spin Chain simulation (time evolution)")
+write(file_out, "\rVer. 2025.3.12")
 write(file_out, "\r")
 
 write(file_out, "\r#### Parameters #####")
