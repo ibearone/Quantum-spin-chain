@@ -242,7 +242,7 @@ end
 
   pushfirst!(HJintime, H0)
   v_c = J_movinglength/t_total
-  t_0 = (J_movinglength-Nx)/2
+  t_0 = (J_movinglength-Nx)/2/v_c
   Jinsites =  Function[t -> J_inter.*exp(-((n-v_c*(t-t_0))/Nx/Jin_sigma)^2)  for n=1:Nx];
   pushfirst!(Jinsites, t -> 1)
     
