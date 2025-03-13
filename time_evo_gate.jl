@@ -315,7 +315,7 @@ for i = 1:Nx
 end
 
   pushfirst!(HJintime, H0)
-  v_c = (N+2)/t_total
+  v_c = (Nx+2)/t_total
   Jinsites =  Function[t ->  J_inter.*heaviside(1-abs(v_c*t-n))*(1-abs(v_c*t-n)) for n=1:Nx];
   pushfirst!(Jinsites, t -> 1)
     
